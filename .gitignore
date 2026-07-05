@@ -1,0 +1,84 @@
+# ==============================
+# Node / Frontend
+# ==============================
+
+node_modules/
+dist/
+build/
+
+# ==============================
+# Python
+# ==============================
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+.venv/
+venv/
+ENV/
+env/
+backend/.venv311/
+
+# ==============================
+# Environment Variables
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+backend/.env
+!backend/.env.example
+
+# ==============================
+# Firebase
+# ==============================
+
+firebase-admin.json
+backend/firebase-admin.json
+*.json.credentials
+
+# ==============================
+# Databases
+# ==============================
+
+*.db
+*.sqlite
+*.sqlite3
+
+backend/data/*.db
+backend/data/*.sqlite*
+
+# ==============================
+# Uploads
+# ==============================
+
+uploads/
+backend/uploads/
+
+# ==============================
+# Logs
+# ==============================
+
+logs/
+*.log
+tmp-vite.log
+tmp-vite.err.log
+
+# ==============================
+# IDE
+# ==============================
+
+.vscode/
+.idea/
+.agents/
+.codex/
+
+# ==============================
+# OS
+# ==============================
+
+.DS_Store
+Thumbs.db
