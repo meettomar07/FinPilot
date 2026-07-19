@@ -8,6 +8,7 @@ from app.models.decision_run import DecisionRun
 from app.models.goal import Goal
 from app.models.transaction import Transaction
 from app.models.upload_batch import UploadBatch
+from app.models.user_setting import UserSetting
 
 
 class DataService:
@@ -84,6 +85,48 @@ class DataService:
         self.db.commit()
         self.db.refresh(goal)
         return goal
+
+    def get_user_settings(self) -> UserSetting:
+        settings = self.db.scalar(
+            select(UserSetting).where(UserSetting.user_id == self.user_id)
+        )
+        if not settings:
+            import json
+            default_prefs = {
+                "weekly_summary": True,
+                "spending_alerts": True,
+                "goal_alerts": True,
+                "ai_digest": False,
+            }
+            settings = UserSetting(
+                user_id=self.user_id,
+                notification_preferences=json.dumps(default_prefs),
+            )
+            self.db.add(settings)
+            self.db.commit()
+            self.db.refresh(settings)
+        return settings
+
+    def update_user_settings(
+        self,
+        *,
+        weekly_summary: bool,
+        spending_alerts: bool,
+        goal_alerts: bool,
+        ai_digest: bool,
+    ) -> UserSetting:
+        import json
+        settings = self.get_user_settings()
+        prefs = {
+            "weekly_summary": weekly_summary,
+            "spending_alerts": spending_alerts,
+            "goal_alerts": goal_alerts,
+            "ai_digest": ai_digest,
+        }
+        settings.notification_preferences = json.dumps(prefs)
+        self.db.commit()
+        self.db.refresh(settings)
+        return settings
 
     def commit(self) -> None:
         self.db.commit()

@@ -283,3 +283,31 @@ export function createDecision(decision: DecisionRequest): Promise<DecisionRespo
     body: JSON.stringify(decision),
   });
 }
+
+export type UserSettingsResponse = {
+  weekly_summary: boolean;
+  spending_alerts: boolean;
+  goal_alerts: boolean;
+  ai_digest: boolean;
+};
+
+export type UserSettingsUpdateRequest = {
+  weekly_summary: boolean;
+  spending_alerts: boolean;
+  goal_alerts: boolean;
+  ai_digest: boolean;
+};
+
+export function getUserSettings(): Promise<UserSettingsResponse> {
+  return request<UserSettingsResponse>("/settings");
+}
+
+export function updateUserSettings(payload: UserSettingsUpdateRequest): Promise<UserSettingsResponse> {
+  return request<UserSettingsResponse>("/settings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}

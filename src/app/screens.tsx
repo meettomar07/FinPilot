@@ -28,6 +28,8 @@ import {
   createGoal,
   getDecisions,
   createDecision,
+  getUserSettings,
+  updateUserSettings,
   type DashboardResponse,
   type ForecastResponse,
   type GoalsResponse,
@@ -4053,6 +4055,119 @@ function Download({ size, className }: { size: number; className?: string }) {
   );
 }
 
+function CustomSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setIsOpen(true);
+        const idx = options.findIndex((opt) => opt.value === value);
+        setActiveIndex(idx >= 0 ? idx : 0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "Escape":
+        setIsOpen(false);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (activeIndex >= 0 && activeIndex < options.length) {
+          onChange(options[activeIndex].value);
+          setIsOpen(false);
+        }
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveIndex((prev) => (prev + 1) % options.length);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveIndex((prev) => (prev - 1 + options.length) % options.length);
+        break;
+      case "Tab":
+        setIsOpen(false);
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+          const idx = options.findIndex((opt) => opt.value === value);
+          setActiveIndex(idx >= 0 ? idx : 0);
+        }}
+        onKeyDown={handleKeyDown}
+        className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground text-left focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+      >
+        <span>{selectedOption?.label}</span>
+        <ChevronDown size={16} className={cn("text-muted-foreground transition-transform duration-200", isOpen ? "transform rotate-180" : "")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto bg-card border border-border rounded-xl shadow-lg animate-in fade-in slide-in-from-top-1 duration-100 divide-y divide-border/20">
+          {options.map((opt, i) => {
+            const isSelected = opt.value === value;
+            const isHighlighted = i === activeIndex;
+            return (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                onMouseEnter={() => setActiveIndex(i)}
+                className={cn(
+                  "cursor-pointer px-3 py-2.5 text-sm transition-colors flex items-center justify-between",
+                  isSelected
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : isHighlighted
+                    ? "bg-muted/80 text-foreground"
+                    : "text-foreground hover:bg-muted/30"
+                )}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check size={14} className={isSelected ? "text-primary-foreground" : "text-primary"} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
@@ -4088,6 +4203,30 @@ export function SettingsPage() {
     "AI Insights Digest": false,
   });
 
+  useEffect(() => {
+    let active = true;
+    const loadSettings = async () => {
+      if (!user) return;
+      try {
+        const res = await getUserSettings();
+        if (active) {
+          setNotifications({
+            "Weekly Summary Email": res.weekly_summary,
+            "Unusual Spending Alerts": res.spending_alerts,
+            "Goal Milestone Alerts": res.goal_alerts,
+            "AI Insights Digest": res.ai_digest,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load user settings:", err);
+      }
+    };
+    loadSettings();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
   const openModal = (type: "name" | "currency" | "timezone") => {
     if (type === "name") setTempName(displayName);
     if (type === "currency") setTempCurrency(currency);
@@ -4095,12 +4234,26 @@ export function SettingsPage() {
     setActiveModal(type);
   };
 
-  const handleToggleNotification = (label: string) => {
-    setNotifications(prev => ({
-      ...prev,
-      [label as keyof typeof prev]: !prev[label as keyof typeof prev]
-    }));
-    toast.success(`${label} preference updated.`);
+  const handleToggleNotification = async (label: string) => {
+    const currentVal = notifications[label as keyof typeof notifications];
+    const updated = {
+      ...notifications,
+      [label]: !currentVal,
+    };
+    setNotifications(updated);
+
+    try {
+      await updateUserSettings({
+        weekly_summary: updated["Weekly Summary Email"],
+        spending_alerts: updated["Unusual Spending Alerts"],
+        goal_alerts: updated["Goal Milestone Alerts"],
+        ai_digest: updated["AI Insights Digest"],
+      });
+      toast.success(`${label} preference saved.`);
+    } catch (err) {
+      setNotifications(notifications);
+      toast.error("Failed to save settings preference.");
+    }
   };
 
   return (
@@ -4260,19 +4413,19 @@ export function SettingsPage() {
               Select your primary currency format for transaction calculations.
             </p>
             <div className="mb-5">
-              <select
+              <CustomSelect
                 value={tempCurrency}
-                onChange={(e) => setTempCurrency(e.target.value)}
-                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-              >
-                <option value="USD ($)">USD ($)</option>
-                <option value="EUR (€)">EUR (€)</option>
-                <option value="GBP (£)">GBP (£)</option>
-                <option value="INR (₹)">INR (₹)</option>
-                <option value="CAD ($)">CAD ($)</option>
-                <option value="AUD ($)">AUD ($)</option>
-                <option value="JPY (¥)">JPY (¥)</option>
-              </select>
+                onChange={setTempCurrency}
+                options={[
+                  { value: "USD ($)", label: "USD ($)" },
+                  { value: "EUR (€)", label: "EUR (€)" },
+                  { value: "GBP (£)", label: "GBP (£)" },
+                  { value: "INR (₹)", label: "INR (₹)" },
+                  { value: "CAD ($)", label: "CAD ($)" },
+                  { value: "AUD ($)", label: "AUD ($)" },
+                  { value: "JPY (¥)", label: "JPY (¥)" },
+                ]}
+              />
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -4317,19 +4470,19 @@ export function SettingsPage() {
               Set your local timezone to display transaction times accurately.
             </p>
             <div className="mb-5">
-              <select
+              <CustomSelect
                 value={tempTimezone}
-                onChange={(e) => setTempTimezone(e.target.value)}
-                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-              >
-                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
-                <option value="America/New_York">America/New_York (EST)</option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-                <option value="Europe/Paris">Europe/Paris (CET)</option>
-                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                <option value="UTC">UTC</option>
-              </select>
+                onChange={setTempTimezone}
+                options={[
+                  { value: "America/Los_Angeles", label: "America/Los_Angeles (PST)" },
+                  { value: "America/New_York", label: "America/New_York (EST)" },
+                  { value: "Europe/London", label: "Europe/London (GMT)" },
+                  { value: "Europe/Paris", label: "Europe/Paris (CET)" },
+                  { value: "Asia/Kolkata", label: "Asia/Kolkata (IST)" },
+                  { value: "Asia/Tokyo", label: "Asia/Tokyo (JST)" },
+                  { value: "UTC", label: "UTC" },
+                ]}
+              />
             </div>
             <div className="flex justify-end gap-2">
               <button

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
 from app.models import Base
-from app.routers import chat, dashboard, decision, forecast, goals, privacy, transactions, upload
+from app.routers import chat, dashboard, decision, forecast, goals, privacy, transactions, upload, settings
 from app.utils.logging import configure_logging
 
 
@@ -17,23 +17,23 @@ async def lifespan(_: FastAPI):
 
 
 def create_app() -> FastAPI:
-    settings = get_settings()
+    settings_cfg = get_settings()
     configure_logging()
     app = FastAPI(
-        title=settings.app_name,
-        version=settings.app_version,
+        title=settings_cfg.app_name,
+        version=settings_cfg.app_version,
         lifespan=lifespan,
     )
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
+        allow_origins=settings_cfg.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    prefix = settings.api_v1_prefix
+    prefix = settings_cfg.api_v1_prefix
     app.include_router(upload.router, prefix=prefix)
     app.include_router(dashboard.router, prefix=prefix)
     app.include_router(transactions.router, prefix=prefix)
@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(privacy.router, prefix=prefix)
     app.include_router(decision.router, prefix=prefix)
     app.include_router(chat.router, prefix=prefix)
+    app.include_router(settings.router, prefix=prefix)
 
     @app.get("/", tags=["meta"])
     def root() -> dict[str, object]:
