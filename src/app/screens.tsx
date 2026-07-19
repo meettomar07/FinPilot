@@ -3358,6 +3358,7 @@ export function AIAssistantPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [dashboardContext, setDashboardContext] = useState<DashboardResponse | null>(null);
+  const hasNoData = !dashboardContext || !dashboardContext.has_financial_data;
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
