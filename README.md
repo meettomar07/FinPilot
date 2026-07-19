@@ -78,7 +78,7 @@ graph TD
     classDef database fill:#9C27B0,stroke:#4a148c,stroke-width:2px,color:#fff;
     classDef external fill:#FBBC04,stroke:#f57f17,stroke-width:2px,color:#000;
 
-    subgraph Frontend (React + TypeScript)
+    subgraph "Frontend (React + TypeScript)"
         App[App.tsx]:::frontend
         Screens[screens.tsx]:::frontend
         APIClient[api.ts]:::frontend
@@ -86,7 +86,7 @@ graph TD
         AuthContext[AuthContext.tsx]:::frontend
     end
 
-    subgraph Backend (FastAPI + Python)
+    subgraph "Backend (FastAPI + Python)"
         Main[main.py]:::backend
         
         subgraph Routers
@@ -106,14 +106,14 @@ graph TD
             PrivacyService[services/privacy_service.py]:::backend
         end
 
-        subgraph Schemas (Pydantic)
+        subgraph "Schemas (Pydantic)"
             SettingsSchema[schemas/user_setting.py]:::backend
             FinancialSchema[schemas/financial.py]:::backend
             DecisionSchema[schemas/decision.py]:::backend
         end
     end
 
-    subgraph Database (SQLite + SQLAlchemy)
+    subgraph "Database (SQLite + SQLAlchemy)"
         DBModels[models/__init__.py]:::database
         UserSettingModel[models/user_setting.py]:::database
         GoalModel[models/goal.py]:::database
