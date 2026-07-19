@@ -70,8 +70,6 @@ npm run dev:stack
 ---
 
 
----
-
 ## 📁 Repository Structure
 
 * `src/` — React/TypeScript frontend files.
