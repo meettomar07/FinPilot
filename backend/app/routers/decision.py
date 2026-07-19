@@ -33,6 +33,12 @@ async def run_decision(
 ) -> DecisionResponse:
     data_service = DataService(db, current_user.uid)
     transactions = data_service.list_transactions()
+    if not transactions:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="Upload transaction data before creating financial decisions."
+        )
     goals = data_service.list_goals()
     financial_engine = FinancialEngineService()
 

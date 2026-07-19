@@ -24,6 +24,50 @@ class FinancialAnalysis:
 
 class FinancialEngineService:
     def analyze(self, transactions: list[Transaction], goals: list[Goal]) -> FinancialAnalysis:
+        if not transactions:
+            return FinancialAnalysis(
+                kpis=FinancialKPIs(
+                    income=Decimal("0"),
+                    expenses=Decimal("0"),
+                    savings=Decimal("0"),
+                    savings_rate=None,
+                    cash_flow=Decimal("0"),
+                    burn_rate=None,
+                    emergency_fund_months=None,
+                    debt_to_income_ratio=None,
+                    goal_progress=None,
+                    net_worth=None,
+                    financial_health_score=None,
+                    decision_readiness_score=None,
+                    decision_risk=None,
+                    decision_confidence=None,
+                    income_stability_score=None,
+                    budget_discipline_score=None,
+                ),
+                summary=FinancialSummary(
+                    transaction_count=0,
+                    date_range_start=None,
+                    date_range_end=None,
+                    top_categories=[],
+                    recent_income_sources=[],
+                    recent_expense_merchants=[],
+                    goals=[
+                        GoalSummary(
+                            id=goal.id,
+                            name=goal.name,
+                            target_amount=goal.target_amount,
+                            current_amount=goal.current_amount,
+                            progress_percent=float((goal.current_amount / goal.target_amount) * 100) if goal.target_amount else 0,
+                            deadline=goal.deadline,
+                            status=goal.status,
+                            created_at=goal.created_at or datetime.now(timezone.utc),
+                        )
+                        for goal in goals
+                    ],
+                ),
+                insights=[]
+            )
+
         income = sum((tx.amount for tx in transactions if tx.amount > 0), start=Decimal("0"))
         expenses = sum((-tx.amount for tx in transactions if tx.amount < 0), start=Decimal("0"))
         savings = income - expenses

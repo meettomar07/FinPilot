@@ -26,6 +26,21 @@ async def chat(
 ) -> ChatResponse:
     data_service = DataService(db, current_user.uid)
     transactions = data_service.list_transactions()
+    
+    if not transactions:
+        from app.schemas.common import PrivacyMetadata
+        privacy = PrivacyMetadata(
+            payload_bytes=len(request.question.encode("utf-8")),
+            response_bytes=len("Please upload a transaction CSV first so I can analyze your finances.".encode("utf-8")),
+            fields_shared=["question"],
+            fields_hidden=["raw_transactions", "credentials", "account_numbers"],
+            privacy_score=100,
+        )
+        return ChatResponse(
+            answer="Please upload a transaction CSV first so I can analyze your finances.",
+            privacy=privacy
+        )
+
     goals = data_service.list_goals()
     decisions = data_service.list_pending_decisions(limit=10)
 

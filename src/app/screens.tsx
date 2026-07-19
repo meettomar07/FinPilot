@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNotifications } from "../context/NotificationContext";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Target, CreditCard, TrendingUp, FlaskConical,
@@ -363,8 +364,8 @@ const NAV_ITEMS = [
   { id: "goals" as Page, label: "Goals", Icon: Target },
   { id: "transactions" as Page, label: "Transactions", Icon: CreditCard },
   { id: "forecast" as Page, label: "Forecast", Icon: TrendingUp },
-  { id: "decision-lab" as Page, label: "Decision Lab", Icon: FlaskConical, highlight: true },
-  { id: "ai-assistant" as Page, label: "AI Assistant", Icon: MessageSquare },
+  { id: "decision-lab" as Page, label: "Decision Lab", Icon: FlaskConical },
+  { id: "ai-assistant" as Page, label: "AI Assistant", Icon: MessageSquare, highlight: true },
 ];
 
 const BOTTOM_NAV = [
@@ -493,6 +494,46 @@ function TopBar({
 }: {
   title: string; subtitle?: string; theme: Theme; onThemeToggle: () => void; sidebarCollapsed: boolean;
 }) {
+  const { notifications, unreadCount, markAllAsRead, clearNotification, clearAll } = useNotifications();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
+  // Close dropdown on Escape key
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && dropdownOpen) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [dropdownOpen]);
+
+  const handleToggleDropdown = () => {
+    if (!dropdownOpen) {
+      markAllAsRead();
+    }
+    setDropdownOpen((prev) => !prev);
+  };
+
   return (
     <header
       className={cn(
@@ -514,11 +555,84 @@ function TopBar({
           <span className="hidden md:inline">Search</span>
           <kbd className="hidden md:inline text-xs bg-background rounded px-1 py-0.5">⌘K</kbd>
         </button>
+
         {/* Notifications */}
-        <button className="relative w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-          <Bell size={17} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EA4335] rounded-full" />
-        </button>
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={handleToggleDropdown}
+            className={cn(
+              "relative w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+              dropdownOpen ? "bg-muted text-foreground" : ""
+            )}
+          >
+            <Bell size={17} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EA4335] rounded-full" />
+            )}
+          </button>
+
+          {dropdownOpen && (
+            <div
+              ref={dropdownRef}
+              className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+            >
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
+                <span className="text-sm font-semibold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Notifications
+                </span>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="text-xs text-[#1A73E8] hover:underline font-medium"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+
+              {/* List */}
+              <div className="max-h-[300px] overflow-y-auto divide-y divide-border">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center space-y-1">
+                    <p className="text-sm font-semibold text-foreground">No notifications</p>
+                    <p className="text-xs text-muted-foreground">You're all caught up. Notifications will appear here when important events occur.</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const Icon = n.type === "success" ? CheckCircle : n.type === "warning" ? AlertTriangle : Info;
+                    const iconColor = n.type === "success" ? "text-[#34A853]" : n.type === "warning" ? "text-[#FBBC04]" : "text-[#1A73E8]";
+                    return (
+                      <div key={n.id} className="p-3.5 flex gap-3 hover:bg-muted/30 group transition-colors relative">
+                        <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Icon size={14} className={iconColor} />
+                        </div>
+                        <div className="flex-1 min-w-0 pr-4">
+                          <p className="text-xs font-semibold text-foreground leading-tight mb-0.5 flex items-center gap-1.5">
+                            {n.title}
+                            {!n.read && (
+                              <span className="w-1.5 h-1.5 bg-[#1A73E8] rounded-full flex-shrink-0" />
+                            )}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground leading-normal mb-1">{n.message}</p>
+                          <p className="text-[10px] text-muted-foreground font-normal">{n.timestamp}</p>
+                        </div>
+                        <button
+                          onClick={() => clearNotification(n.id)}
+                          className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Theme */}
         <button
           onClick={onThemeToggle}
@@ -1382,6 +1496,7 @@ export function DashboardPage({
   setSubtitle?: (sub: string) => void;
 }) {
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1452,10 +1567,30 @@ export function DashboardPage({
     try {
       await uploadTransactions(file);
       toast.success("Transactions imported successfully.");
+      addNotification({
+        title: "CSV uploaded successfully",
+        message: "Your bank statement transaction data was imported successfully.",
+        type: "success",
+      });
+      addNotification({
+        title: "Financial analysis completed",
+        message: "Your overall financial health metrics have been calculated.",
+        type: "success",
+      });
+      addNotification({
+        title: "AI insights generated",
+        message: "Personalized insights have been successfully generated for your dashboard.",
+        type: "success",
+      });
       await loadData(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";
       toast.error(message);
+      addNotification({
+        title: "CSV upload failed",
+        message: message,
+        type: "warning",
+      });
     } finally {
       if (isMountedRef.current) {
         setUploading(false);
@@ -1520,16 +1655,98 @@ export function DashboardPage({
     amount: num(tx.amount),
   }));
 
+  const hasNoData = !dashboard || !dashboard.has_financial_data;
+
   const dashboardCards = dashboard
     ? [
-        { label: "Financial Health", value: String(dashboard.financialHealth), unit: "/100", trend: `${dashboard.kpis.financial_health_score >= 70 ? "Good" : "Needs work"}`, up: dashboard.kpis.financial_health_score >= 70, Icon: Activity, color: "#FBBC04", bg: "#FEF7E0", sub: "Health score" },
-        { label: "Net Worth", value: fmt(num(dashboard.netWorth), { currency: true, compact: true }), unit: "", trend: `${dashboard.summary.transaction_count} tx`, up: true, Icon: Wallet, color: "#34A853", bg: "#E6F4EA", sub: "Current" },
-        { label: "Savings Rate", value: `${dashboard.savingsRate.toFixed(1)}%`, unit: "", trend: `${dashboard.kpis.income_stability_score}/100`, up: dashboard.savingsRate >= 0, Icon: PiggyBank, color: "#1A73E8", bg: "#E8F0FE", sub: "of income" },
-        { label: "Emergency Fund", value: dashboard.emergencyFundMonths.toFixed(1), unit: " mo", trend: dashboard.emergencyFundMonths >= 6 ? "Healthy" : "Build more", up: dashboard.emergencyFundMonths >= 6, Icon: ShieldCheck, color: "#34A853", bg: "#E6F4EA", sub: "runway" },
-        { label: "Cash Flow", value: fmt(num(dashboard.cashFlow), { currency: true, compact: true }), unit: "", trend: dashboard.kpis.cash_flow >= 0 ? "Positive" : "Negative", up: dashboard.kpis.cash_flow >= 0, Icon: TrendingUp, color: "#1A73E8", bg: "#E8F0FE", sub: "current" },
-        { label: "Burn Rate", value: fmt(num(dashboard.burnRate), { currency: true, compact: true }), unit: "/mo", trend: "Monthly", up: false, Icon: Zap, color: "#EA4335", bg: "#FCE8E6", sub: "expenses" },
-        { label: "Goal Progress", value: `${dashboard.goalProgress.toFixed(0)}%`, unit: "", trend: dashboard.goalProgress >= 50 ? "On track" : "Needs focus", up: dashboard.goalProgress >= 50, Icon: Target, color: "#9C27B0", bg: "#F3E5F5", sub: "avg progress" },
-        { label: "Decision Score", value: String(dashboard.decisionReadiness), unit: "/100", trend: dashboard.kpis.decision_risk, up: dashboard.decisionReadiness >= 60, Icon: Brain, color: "#00BCD4", bg: "#E0F7FA", sub: "readiness" },
+        {
+          label: "Financial Health",
+          value: hasNoData ? "--" : (dashboard.financialHealth !== null ? String(dashboard.financialHealth) : "--"),
+          unit: hasNoData || dashboard.financialHealth === null ? "" : "/100",
+          trend: hasNoData ? "No data" : `${(dashboard.kpis.financial_health_score ?? 0) >= 70 ? "Good" : "Needs work"}`,
+          up: hasNoData ? false : (dashboard.kpis.financial_health_score ?? 0) >= 70,
+          Icon: Activity,
+          color: "#FBBC04",
+          bg: "#FEF7E0",
+          sub: "Health score"
+        },
+        {
+          label: "Net Worth",
+          value: hasNoData ? "--" : (dashboard.netWorth !== null ? fmt(num(dashboard.netWorth), { currency: true, compact: true }) : "--"),
+          unit: "",
+          trend: hasNoData ? "Upload CSV" : `${dashboard.summary.transaction_count} tx`,
+          up: true,
+          Icon: Wallet,
+          color: "#34A853",
+          bg: "#E6F4EA",
+          sub: "Current"
+        },
+        {
+          label: "Savings Rate",
+          value: hasNoData ? "--" : (dashboard.savingsRate !== null ? `${dashboard.savingsRate.toFixed(1)}%` : "--"),
+          unit: "",
+          trend: hasNoData ? "Upload CSV" : `${dashboard.kpis.income_stability_score ?? 0}/100`,
+          up: hasNoData ? false : (dashboard.savingsRate ?? 0) >= 0,
+          Icon: PiggyBank,
+          color: "#1A73E8",
+          bg: "#E8F0FE",
+          sub: "of income"
+        },
+        {
+          label: "Emergency Fund",
+          value: hasNoData ? "--" : (dashboard.emergencyFundMonths !== null ? dashboard.emergencyFundMonths.toFixed(1) : "--"),
+          unit: hasNoData || dashboard.emergencyFundMonths === null ? "" : " mo",
+          trend: hasNoData ? "Upload CSV" : ((dashboard.emergencyFundMonths ?? 0) >= 6 ? "Healthy" : "Build more"),
+          up: hasNoData ? false : (dashboard.emergencyFundMonths ?? 0) >= 6,
+          Icon: ShieldCheck,
+          color: "#34A853",
+          bg: "#E6F4EA",
+          sub: "runway"
+        },
+        {
+          label: "Cash Flow",
+          value: hasNoData ? "--" : (dashboard.cashFlow !== null ? fmt(num(dashboard.cashFlow), { currency: true, compact: true }) : "--"),
+          unit: "",
+          trend: hasNoData ? "Upload CSV" : ((dashboard.kpis.cash_flow ?? 0) >= 0 ? "Positive" : "Negative"),
+          up: hasNoData ? false : (dashboard.kpis.cash_flow ?? 0) >= 0,
+          Icon: TrendingUp,
+          color: "#1A73E8",
+          bg: "#E8F0FE",
+          sub: "current"
+        },
+        {
+          label: "Burn Rate",
+          value: hasNoData ? "--" : (dashboard.burnRate !== null ? fmt(num(dashboard.burnRate), { currency: true, compact: true }) : "--"),
+          unit: hasNoData || dashboard.burnRate === null ? "" : "/mo",
+          trend: hasNoData ? "Upload CSV" : "Monthly",
+          up: false,
+          Icon: Zap,
+          color: "#EA4335",
+          bg: "#FCE8E6",
+          sub: "expenses"
+        },
+        {
+          label: "Goal Progress",
+          value: hasNoData ? "--" : (dashboard.goalProgress !== null ? `${dashboard.goalProgress.toFixed(0)}%` : "--"),
+          unit: "",
+          trend: hasNoData ? "No goals yet" : ((dashboard.goalProgress ?? 0) >= 50 ? "On track" : "Needs focus"),
+          up: hasNoData ? false : (dashboard.goalProgress ?? 0) >= 50,
+          Icon: Target,
+          color: "#9C27B0",
+          bg: "#F3E5F5",
+          sub: "avg progress"
+        },
+        {
+          label: "Decision Score",
+          value: hasNoData ? "--" : (dashboard.decisionReadiness !== null ? String(dashboard.decisionReadiness) : "--"),
+          unit: hasNoData || dashboard.decisionReadiness === null ? "" : "/100",
+          trend: hasNoData ? "No data" : (dashboard.kpis.decision_risk ?? "No data"),
+          up: hasNoData ? false : (dashboard.decisionReadiness ?? 0) >= 60,
+          Icon: Brain,
+          color: "#00BCD4",
+          bg: "#E0F7FA",
+          sub: "readiness"
+        }
       ]
     : [];
 
@@ -1562,7 +1779,7 @@ export function DashboardPage({
               {formatFullDate(dashboard.summary.date_range_end)} · Your finances look healthy today.
             </p>
           ) : (
-            <p className="text-muted-foreground mt-1">No financial data uploaded yet.</p>
+            <p className="text-muted-foreground mt-1">Ready to start analyzing your finances?</p>
           )}
         </div>
         <input
@@ -1572,24 +1789,74 @@ export function DashboardPage({
           accept=".csv"
           className="hidden"
         />
-        <button
-          onClick={handleUploadClick}
-          disabled={uploading}
-          className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {uploading ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload size={16} />
-              Upload CSV
-            </>
-          )}
-        </button>
+        {!hasNoData && (
+          <button
+            onClick={handleUploadClick}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {uploading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Upload CSV
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Onboarding Empty State Hero */}
+      {hasNoData && (
+        <div className="bg-card border-2 border-dashed border-primary/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-primary/50 transition-colors shadow-sm">
+          <div className="space-y-4 flex-1">
+            <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Upload your bank statement CSV to unlock:
+            </h3>
+            <ul className="space-y-2 text-sm text-muted-foreground font-medium">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                AI Financial Advisor
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Spending Analytics
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Forecasting
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Decision Lab
+              </li>
+            </ul>
+          </div>
+          <div className="flex-shrink-0">
+            <button
+              onClick={handleUploadClick}
+              disabled={uploading}
+              className="inline-flex items-center gap-2.5 bg-primary text-primary-foreground text-base font-semibold px-6 py-3 rounded-2xl hover:opacity-95 transition-opacity disabled:opacity-50 shadow-md hover:shadow-lg"
+            >
+              {uploading ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  Uploading statement...
+                </>
+              ) : (
+                <>
+                  <Upload size={18} />
+                  Upload Statement CSV
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1604,8 +1871,8 @@ export function DashboardPage({
             <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               {value}<span className="text-base font-medium text-muted-foreground">{unit}</span>
             </p>
-            <p className={cn("text-xs font-medium mt-1", up ? "text-[#34A853]" : "text-[#EA4335]")}>
-              {up ? "↑" : "↓"} {trend}
+            <p className={cn("text-xs font-medium mt-1", hasNoData ? "text-muted-foreground" : (up ? "text-[#34A853]" : "text-[#EA4335]"))}>
+              {!hasNoData && (up ? "↑ " : "↓ ")}{trend}
               <span className="text-muted-foreground font-normal ml-1">· {sub}</span>
             </p>
           </div>
@@ -1626,7 +1893,7 @@ export function DashboardPage({
               <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#9C27B0] rounded border-dashed" />Projected</div>
             </div>
           </div>
-          {monthlyNetWorth.length > 0 ? (
+          {monthlyNetWorth.length > 0 && !hasNoData ? (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={monthlyNetWorth} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
                 <defs>
@@ -1661,7 +1928,7 @@ export function DashboardPage({
             <h3 className="font-semibold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Spending Breakdown</h3>
             <p className="text-muted-foreground text-sm">{formatDashboardDate(dashboard?.summary.date_range_end)}</p>
           </div>
-          {spendingBreakdown.length > 0 ? (
+          {spendingBreakdown.length > 0 && !hasNoData ? (
             <>
               <ResponsiveContainer width="100%" height={150}>
                 <PieChart>
@@ -1700,7 +1967,7 @@ export function DashboardPage({
               <p className="text-muted-foreground text-sm">Income vs expenses, last 6 months</p>
             </div>
           </div>
-          {cashFlowSeries.length > 0 ? (
+          {cashFlowSeries.length > 0 && !hasNoData ? (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={cashFlowSeries} barGap={4} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
@@ -1728,33 +1995,43 @@ export function DashboardPage({
             <h3 className="font-semibold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>AI Insights</h3>
           </div>
           <div className="space-y-3 flex-1">
-            {(dashboard.insights.length ? dashboard.insights : [{ title: "No insights yet", severity: "info", message: "Upload more transactions to unlock AI insights." }]).map(({ severity, message }, i) => {
-              const type = severity === "high" || severity === "warning" ? "warning" : severity === "positive" ? "positive" : "info";
-              const Icon = type === "warning" ? AlertTriangle : type === "positive" ? TrendingUp : CheckCircle;
-              const text = message;
-              return (
-              <div
-                key={i}
-                className={cn(
-                  "flex items-start gap-3 p-3.5 rounded-xl text-sm",
-                  type === "positive" ? "bg-[#E6F4EA]" : type === "warning" ? "bg-[#FEF7E0]" : "bg-[#E8F0FE]"
-                )}
-              >
-                <Icon
-                  size={14}
-                  className={cn(
-                    "mt-0.5 flex-shrink-0",
-                    type === "positive" ? "text-[#34A853]" : type === "warning" ? "text-[#F9AB00]" : "text-[#1A73E8]"
-                  )}
-                />
-                <p className={cn(
-                  "leading-relaxed text-xs",
-                  type === "positive" ? "text-[#137333]" : type === "warning" ? "text-[#b06000]" : "text-[#1558B0]"
-                )}>
-                  {text}
+            {hasNoData ? (
+              <div className="flex items-start gap-3 p-3.5 rounded-xl text-sm bg-[#E8F0FE] text-[#1558B0]">
+                <Sparkles size={14} className="mt-0.5 flex-shrink-0 text-[#1A73E8]" />
+                <p className="leading-relaxed text-xs">
+                  Upload a bank statement CSV to receive personalized AI financial insights.
                 </p>
               </div>
-            );})}
+            ) : (
+              (dashboard.insights.length > 0 ? dashboard.insights : [{ title: "No insights yet", severity: "info", message: "Upload more transactions to unlock AI insights." }]).map(({ severity, message }, i) => {
+                const type = severity === "high" || severity === "warning" ? "warning" : severity === "positive" ? "positive" : "info";
+                const Icon = type === "warning" ? AlertTriangle : type === "positive" ? TrendingUp : CheckCircle;
+                const text = message;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "flex items-start gap-3 p-3.5 rounded-xl text-sm",
+                      type === "positive" ? "bg-[#E6F4EA]" : type === "warning" ? "bg-[#FEF7E0]" : "bg-[#E8F0FE]"
+                    )}
+                  >
+                    <Icon
+                      size={14}
+                      className={cn(
+                        "mt-0.5 flex-shrink-0",
+                        type === "positive" ? "text-[#34A853]" : type === "warning" ? "text-[#F9AB00]" : "text-[#1A73E8]"
+                      )}
+                    />
+                    <p className={cn(
+                      "leading-relaxed text-xs",
+                      type === "positive" ? "text-[#137333]" : type === "warning" ? "text-[#b06000]" : "text-[#1558B0]"
+                    )}>
+                      {text}
+                    </p>
+                  </div>
+                );
+              })
+            )}
           </div>
           <button
             onClick={() => onNavigate("ai-assistant")}
@@ -1841,6 +2118,7 @@ export function DashboardPage({
 }
 
 export function GoalsPage() {
+  const { addNotification } = useNotifications();
   const [goals, setGoals] = useState<GoalsResponse | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1917,6 +2195,11 @@ export function GoalsPage() {
         }),
       });
       toast.success("Goal created successfully!");
+      addNotification({
+        title: "Goal created successfully",
+        message: `Your new financial goal "${formName.trim()}" has been created and is active.`,
+        type: "success",
+      });
       setModalOpen(false);
       // Reset form
       setFormName("");
@@ -2548,10 +2831,12 @@ export function ForecastPage() {
 
 
 export function DecisionLabPage() {
+  const { addNotification } = useNotifications();
   const [decisions, setDecisions] = useState<DecisionResponse[]>([]);
   const [selected, setSelected] = useState<DecisionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasNoData, setHasNoData] = useState(false);
 
   // Modal and form states
   const [modalOpen, setModalOpen] = useState(false);
@@ -2568,8 +2853,13 @@ export function DecisionLabPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await getDecisions();
+      const [response, dashboardResponse] = await Promise.all([
+        getDecisions(),
+        getDashboard(),
+      ]);
       setDecisions(response);
+      setHasNoData(!dashboardResponse || !dashboardResponse.has_financial_data);
+      
       if (response.length > 0) {
         if (selectId) {
           const matched = response.find(r => r.id === selectId);
@@ -2631,6 +2921,11 @@ export function DecisionLabPage() {
         notes: formNotes.trim() || null,
       });
       toast.success("Simulation finished successfully!");
+      addNotification({
+        title: "Decision simulation completed",
+        message: `The impact analysis for your custom scenario "${formLabel.trim()}" is ready.`,
+        type: "success",
+      });
       setModalOpen(false);
       // Reset form
       setFormLabel("");
@@ -2645,6 +2940,11 @@ export function DecisionLabPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to run simulation.";
       toast.error(msg);
+      addNotification({
+        title: "Decision simulation failed",
+        message: `Failed to simulate "${formLabel.trim()}": ${msg}`,
+        type: "warning",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -2694,13 +2994,24 @@ export function DecisionLabPage() {
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+          disabled={hasNoData}
+          className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           <Plus size={16} /> New Decision
         </button>
       </div>
 
-      {decisions.length === 0 ? (
+      {hasNoData ? (
+        <div className="bg-card rounded-2xl p-8 border border-border text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#FCE8E6] flex items-center justify-center mx-auto text-[#EA4335]">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="font-bold text-lg text-foreground">Upload transaction data before creating financial decisions.</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+            FinPilot AI needs your transaction history to simulate purchase affordability, cash flow impacts, and goal delays.
+          </p>
+        </div>
+      ) : decisions.length === 0 ? (
         <div className="bg-card rounded-2xl p-8 border border-border text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-[#E8F0FE] flex items-center justify-center mx-auto text-[#1A73E8]">
             <FlaskConical size={24} />
@@ -3103,13 +3414,19 @@ export function AIAssistantPage() {
         {
           id: Date.now() + 1, role: "assistant" as const,
           text: response.answer,
-          cards: dashboardContext
+          cards: hasNoData
             ? [
-                { label: "Financial Health", value: `${dashboardContext.financialHealth}/100`, color: "#FBBC04", sub: "Current" },
-                { label: "Savings Rate", value: `${dashboardContext.savingsRate.toFixed(1)}%`, color: "#34A853", sub: "From dashboard" },
-                { label: "Decision Readiness", value: `${dashboardContext.decisionReadiness}/100`, color: "#1A73E8", sub: "Current" },
+                { label: "Financial Health", value: "--", color: "#FBBC04", sub: "Current" },
+                { label: "Savings Rate", value: "--", color: "#34A853", sub: "From dashboard" },
+                { label: "Decision Readiness", value: "--", color: "#1A73E8", sub: "Current" },
               ]
-            : null,
+            : (dashboardContext
+                ? [
+                    { label: "Financial Health", value: dashboardContext.financialHealth !== null ? `${dashboardContext.financialHealth}/100` : "--", color: "#FBBC04", sub: "Current" },
+                    { label: "Savings Rate", value: dashboardContext.savingsRate !== null ? `${dashboardContext.savingsRate.toFixed(1)}%` : "--", color: "#34A853", sub: "From dashboard" },
+                    { label: "Decision Readiness", value: dashboardContext.decisionReadiness !== null ? `${dashboardContext.decisionReadiness}/100` : "--", color: "#1A73E8", sub: "Current" },
+                  ]
+                : null),
           followUp: null,
         },
       ]);
@@ -3130,12 +3447,18 @@ export function AIAssistantPage() {
     }
   };
 
-  const prompts = [
-    "Can I afford to retire at 55?",
-    "How can I improve my credit score?",
-    "Should I pay off debt or invest?",
-    "What is my biggest financial risk?",
-  ];
+  const prompts = hasNoData
+    ? [
+        "How do I upload my bank statement?",
+        "What CSV formats are supported?",
+        "How does FinPilot analyze my finances?",
+      ]
+    : [
+        "Can I afford to retire at 55?",
+        "How can I improve my credit score?",
+        "Should I pay off debt or invest?",
+        "What is my biggest financial risk?",
+      ];
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col">
@@ -3162,9 +3485,9 @@ export function AIAssistantPage() {
           <div className="mt-5 pt-5 border-t border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Context</p>
             <div className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex justify-between"><span>Net Worth</span><span className="font-medium text-foreground">{dashboardContext ? fmt(num(dashboardContext.netWorth), { currency: true, compact: true }) : "--"}</span></div>
-              <div className="flex justify-between"><span>Savings Rate</span><span className="font-medium text-foreground">{dashboardContext ? `${dashboardContext.savingsRate.toFixed(1)}%` : "--"}</span></div>
-              <div className="flex justify-between"><span>Health Score</span><span className="font-medium text-foreground">{dashboardContext ? `${dashboardContext.financialHealth}/100` : "--"}</span></div>
+              <div className="flex justify-between"><span>Net Worth</span><span className="font-medium text-foreground">{!hasNoData && dashboardContext && dashboardContext.netWorth !== null ? fmt(num(dashboardContext.netWorth), { currency: true, compact: true }) : "--"}</span></div>
+              <div className="flex justify-between"><span>Savings Rate</span><span className="font-medium text-foreground">{!hasNoData && dashboardContext && dashboardContext.savingsRate !== null ? `${dashboardContext.savingsRate.toFixed(1)}%` : "--"}</span></div>
+              <div className="flex justify-between"><span>Health Score</span><span className="font-medium text-foreground">{!hasNoData && dashboardContext && dashboardContext.financialHealth !== null ? `${dashboardContext.financialHealth}/100` : "--"}</span></div>
             </div>
           </div>
         </div>
@@ -3251,6 +3574,7 @@ export function AIAssistantPage() {
 // ─── Privacy Page ─────────────────────────────────────────────────────────────
 
 export function PrivacyPage() {
+  const { addNotification } = useNotifications();
   const [controls, setControls] = useState({
     cloudSync: true, analytics: false, crashReports: true, aiPersonalization: true,
   });
@@ -3308,6 +3632,11 @@ export function PrivacyPage() {
         link.click();
         document.body.removeChild(link);
         toast.success("CSV export downloaded successfully!");
+        addNotification({
+          title: "CSV exported successfully",
+          message: "A raw CSV data file containing your transactions, goals, and decisions has been generated.",
+          type: "success",
+        });
       } else {
         const printWindow = window.open("", "_blank");
         if (!printWindow) {
@@ -3499,6 +3828,11 @@ export function PrivacyPage() {
         `);
         printWindow.document.close();
         toast.success("PDF generation triggered successfully!");
+        addNotification({
+          title: "PDF exported successfully",
+          message: "A printable PDF financial report summarizing your portfolio has been generated.",
+          type: "success",
+        });
       }
       setExportModalOpen(false);
     } catch (err) {

@@ -20,13 +20,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } else if (authTokenProvider) {
     token = await authTokenProvider();
   }
-  const response = await fetch(`${API_PREFIX}${path}`, {
+  
+  let response = await fetch(`${API_PREFIX}${path}`, {
     ...init,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
   });
+
+  // Self-healing: if unauthorized (expired token), force-refresh and retry once
+  if (response.status === 401 && firebaseAuth?.currentUser) {
+    try {
+      token = await firebaseAuth.currentUser.getIdToken(true);
+      response = await fetch(`${API_PREFIX}${path}`, {
+        ...init,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(init?.headers ?? {}),
+        },
+      });
+    } catch (refreshErr) {
+      console.error("Failed to force refresh Firebase token:", refreshErr);
+    }
+  }
 
   if (!response.ok) {
     let detail = `Request failed with status ${response.status}`;
@@ -52,14 +69,14 @@ export type Insight = {
 };
 
 export type DashboardResponse = {
-  financialHealth: number;
-  decisionReadiness: number;
-  netWorth: string | number;
-  cashFlow: string | number;
-  burnRate: string | number;
-  savingsRate: number;
-  emergencyFundMonths: number;
-  goalProgress: number;
+  financialHealth: number | null;
+  decisionReadiness: number | null;
+  netWorth: string | number | null;
+  cashFlow: string | number | null;
+  burnRate: string | number | null;
+  savingsRate: number | null;
+  emergencyFundMonths: number | null;
+  goalProgress: number | null;
   insights: Insight[];
   pendingDecisions: Array<{
     id: number;
@@ -83,20 +100,21 @@ export type DashboardResponse = {
     income: string | number;
     expenses: string | number;
     savings: string | number;
-    savings_rate: number;
+    savings_rate: number | null;
     cash_flow: string | number;
-    burn_rate: string | number;
-    emergency_fund_months: number;
-    debt_to_income_ratio: number;
-    goal_progress: number;
-    net_worth: string | number;
-    financial_health_score: number;
-    decision_readiness_score: number;
-    decision_risk: string;
-    decision_confidence: number;
-    income_stability_score: number;
-    budget_discipline_score: number;
+    burn_rate: string | number | null;
+    emergency_fund_months: number | null;
+    debt_to_income_ratio: number | null;
+    goal_progress: number | null;
+    net_worth: string | number | null;
+    financial_health_score: number | null;
+    decision_readiness_score: number | null;
+    decision_risk: string | null;
+    decision_confidence: number | null;
+    income_stability_score: number | null;
+    budget_discipline_score: number | null;
   };
+  has_financial_data: boolean;
 };
 
 export type GoalSummary = {

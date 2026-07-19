@@ -45,4 +45,5 @@ def get_dashboard(
         pendingDecisions=pending_decisions,
         summary=analysis.summary,
         kpis=analysis.kpis,
+        has_financial_data=len(transactions) > 0,
     )
