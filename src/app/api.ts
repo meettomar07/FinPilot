@@ -21,6 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     token = await authTokenProvider();
   }
   
+  console.log("[API] request fetching:", `${API_PREFIX}${path}`, "with init:", init);
   let response = await fetch(`${API_PREFIX}${path}`, {
     ...init,
     headers: {
@@ -303,6 +304,7 @@ export function getUserSettings(): Promise<UserSettingsResponse> {
 }
 
 export function updateUserSettings(payload: UserSettingsUpdateRequest): Promise<UserSettingsResponse> {
+  console.log("[API] updateUserSettings called with payload:", payload);
   return request<UserSettingsResponse>("/settings", {
     method: "POST",
     headers: {

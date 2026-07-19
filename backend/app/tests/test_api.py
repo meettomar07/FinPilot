@@ -51,3 +51,40 @@ def test_chat_endpoint(client) -> None:
     assert "answer" in payload
     assert "privacy" in payload
 
+
+def test_settings_endpoint(client) -> None:
+    # Test GET settings
+    response = client.get("/api/v1/settings")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["weekly_summary"] is True
+    assert payload["spending_alerts"] is True
+    assert payload["goal_alerts"] is True
+    assert payload["ai_digest"] is False
+
+    # Test POST settings
+    update_response = client.post(
+        "/api/v1/settings",
+        json={
+            "weekly_summary": False,
+            "spending_alerts": True,
+            "goal_alerts": False,
+            "ai_digest": True,
+        },
+    )
+    assert update_response.status_code == 200
+    updated_payload = update_response.json()
+    assert updated_payload["weekly_summary"] is False
+    assert updated_payload["spending_alerts"] is True
+    assert updated_payload["goal_alerts"] is False
+    assert updated_payload["ai_digest"] is True
+
+    # Test GET settings after update to verify persistence
+    response = client.get("/api/v1/settings")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["weekly_summary"] is False
+    assert payload["spending_alerts"] is True
+    assert payload["goal_alerts"] is False
+    assert payload["ai_digest"] is True
+

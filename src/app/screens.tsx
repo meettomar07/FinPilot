@@ -4235,22 +4235,28 @@ export function SettingsPage() {
   };
 
   const handleToggleNotification = async (label: string) => {
+    console.log("[Settings] handleToggleNotification called for label:", label);
     const currentVal = notifications[label as keyof typeof notifications];
+    console.log("[Settings] current val from state:", currentVal);
     const updated = {
       ...notifications,
       [label]: !currentVal,
     };
+    console.log("[Settings] updated notifications object:", updated);
     setNotifications(updated);
 
     try {
-      await updateUserSettings({
+      console.log("[Settings] calling updateUserSettings...");
+      const result = await updateUserSettings({
         weekly_summary: updated["Weekly Summary Email"],
         spending_alerts: updated["Unusual Spending Alerts"],
         goal_alerts: updated["Goal Milestone Alerts"],
         ai_digest: updated["AI Insights Digest"],
       });
+      console.log("[Settings] updateUserSettings returned success:", result);
       toast.success(`${label} preference saved.`);
     } catch (err) {
+      console.error("[Settings] updateUserSettings caught error:", err);
       setNotifications(notifications);
       toast.error("Failed to save settings preference.");
     }
