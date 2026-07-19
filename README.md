@@ -69,6 +69,107 @@ npm run dev:stack
 
 ---
 
+## 🗺️ Project Architecture
+
+```mermaid
+graph TD
+    classDef frontend fill:#1A73E8,stroke:#0d47a1,stroke-width:2px,color:#fff;
+    classDef backend fill:#34A853,stroke:#1b5e20,stroke-width:2px,color:#fff;
+    classDef database fill:#9C27B0,stroke:#4a148c,stroke-width:2px,color:#fff;
+    classDef external fill:#FBBC04,stroke:#f57f17,stroke-width:2px,color:#000;
+
+    subgraph Frontend (React + TypeScript)
+        App[App.tsx]:::frontend
+        Screens[screens.tsx]:::frontend
+        APIClient[api.ts]:::frontend
+        NotifContext[NotificationContext.tsx]:::frontend
+        AuthContext[AuthContext.tsx]:::frontend
+    end
+
+    subgraph Backend (FastAPI + Python)
+        Main[main.py]:::backend
+        
+        subgraph Routers
+            UploadRouter[routers/upload.py]:::backend
+            DashRouter[routers/dashboard.py]:::backend
+            GoalRouter[routers/goals.py]:::backend
+            DecisionRouter[routers/decision.py]:::backend
+            ChatRouter[routers/chat.py]:::backend
+            SettingsRouter[routers/settings.py]:::backend
+            PrivacyRouter[routers/privacy.py]:::backend
+        end
+        
+        subgraph Services
+            DataService[services/data_service.py]:::backend
+            GeminiService[services/gemini_service.py]:::backend
+            AuthService[services/firebase_auth.py]:::backend
+            PrivacyService[services/privacy_service.py]:::backend
+        end
+
+        subgraph Schemas (Pydantic)
+            SettingsSchema[schemas/user_setting.py]:::backend
+            FinancialSchema[schemas/financial.py]:::backend
+            DecisionSchema[schemas/decision.py]:::backend
+        end
+    end
+
+    subgraph Database (SQLite + SQLAlchemy)
+        DBModels[models/__init__.py]:::database
+        UserSettingModel[models/user_setting.py]:::database
+        GoalModel[models/goal.py]:::database
+        TransactionModel[models/transaction.py]:::database
+        DecisionModel[models/decision_run.py]:::database
+    end
+
+    subgraph External
+        FirebaseAuth[Firebase Auth]:::external
+        GeminiAPI[Gemini API]:::external
+    end
+
+    App --> Screens
+    App --> AuthContext
+    Screens --> NotifContext
+    Screens --> APIClient
+    
+    APIClient --> Main
+
+    Main --> UploadRouter
+    Main --> DashRouter
+    Main --> GoalRouter
+    Main --> DecisionRouter
+    Main --> ChatRouter
+    Main --> SettingsRouter
+    Main --> PrivacyRouter
+
+    UploadRouter --> DataService
+    UploadRouter --> GeminiService
+    DashRouter --> DataService
+    GoalRouter --> DataService
+    DecisionRouter --> DataService
+    DecisionRouter --> GeminiService
+    ChatRouter --> DataService
+    ChatRouter --> GeminiService
+    SettingsRouter --> DataService
+    PrivacyRouter --> PrivacyService
+    PrivacyService --> DataService
+
+    DataService --> DBModels
+    DBModels --> UserSettingModel
+    DBModels --> GoalModel
+    DBModels --> TransactionModel
+    DBModels --> DecisionModel
+
+    SettingsRouter -.-> SettingsSchema
+    DashRouter -.-> FinancialSchema
+    DecisionRouter -.-> DecisionSchema
+
+    AuthContext -.-> FirebaseAuth
+    AuthService -.-> FirebaseAuth
+    GeminiService -.-> GeminiAPI
+```
+
+---
+
 ## 📁 Repository Structure
 
 * `src/` — React/TypeScript frontend files.
