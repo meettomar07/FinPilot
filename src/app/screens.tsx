@@ -199,12 +199,12 @@ const DECISIONS = [
 const AI_MESSAGES_INITIAL = buildInitialAiMessages(null);
 
 const PRIVACY_FEATURES = [
-  { icon: Lock, title: "End-to-End Encryption", desc: "All data is encrypted with AES-256 before leaving your device. Not even FinPilot can read it.", color: "#1A73E8" },
-  { icon: Cpu, title: "Local AI Processing", desc: "Core financial analysis runs on-device. Your numbers never leave your machine for routine queries.", color: "#34A853" },
-  { icon: Server, title: "Backend Data Isolation", desc: "Each authenticated Firebase user sees only their own records in the backend database.", color: "#9C27B0" },
-  { icon: Eye, title: "Full Data Transparency", desc: "See exactly what data each AI feature accesses before granting permission. Revoke anytime.", color: "#FBBC04" },
-  { icon: ShieldCheck, title: "SOC 2 Type II Certified", desc: "Independently audited security controls. Annual penetration testing by third-party firms.", color: "#00BCD4" },
-  { icon: Database, title: "Zero Data Sales", desc: "Your financial data is never sold, rented, or shared with advertisers, period.", color: "#EA4335" },
+  { icon: Lock, title: "Firebase Authentication", desc: "Secure sign-in and user authentication powered by Firebase. Your passwords and credentials are managed securely.", color: "#1A73E8" },
+  { icon: ShieldCheck, title: "Secure Connection", desc: "All traffic between your browser and our backend is encrypted in transit using industry-standard HTTPS/TLS protocols.", color: "#34A853" },
+  { icon: Server, title: "Per-User Data Isolation", desc: "Each user's uploaded transactions, goals, and simulated scenarios are securely isolated in our backend database.", color: "#9C27B0" },
+  { icon: Eye, title: "Data Transparency", desc: "Request and download a complete copy of all your financial data in CSV or PDF formats at any time.", color: "#FBBC04" },
+  { icon: Cpu, title: "Google Gemini AI", desc: "Gemini receives only the financial context required to answer your assistant queries, keeping your analysis context-specific.", color: "#00BCD4" },
+  { icon: Database, title: "Zero Data Sales", desc: "Your financial statements and simulation records are never sold, rented, or shared with advertisers.", color: "#EA4335" },
 ];
 
 // ─── Utility Components ───────────────────────────────────────────────────────
@@ -3634,7 +3634,7 @@ export function PrivacyPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success("CSV export downloaded successfully!");
+        toast.success("Your financial data has been exported successfully.");
         addNotification({
           title: "CSV exported successfully",
           message: "A raw CSV data file containing your transactions, goals, and decisions has been generated.",
@@ -3830,7 +3830,7 @@ export function PrivacyPage() {
           </html>
         `);
         printWindow.document.close();
-        toast.success("PDF generation triggered successfully!");
+        toast.success("Your financial data has been exported successfully.");
         addNotification({
           title: "PDF exported successfully",
           message: "A printable PDF financial report summarizing your portfolio has been generated.",
@@ -3853,31 +3853,30 @@ export function PrivacyPage() {
         <p className="text-muted-foreground mt-1">Understand exactly how FinPilot handles your data. Control everything.</p>
       </div>
 
-      {/* Privacy Score */}
-      <div className="bg-gradient-to-br from-[#1C2B4A] to-[#0D47A1] rounded-2xl p-7 text-white flex items-center gap-8">
-        <div className="relative w-28 h-28 flex-shrink-0">
-          <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" />
-            <circle
-              cx="60" cy="60" r="50" fill="none" stroke="#8AB4F8" strokeWidth="10"
-              strokeDasharray={`${(score / 100) * 314} 314`}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold">{score}</span>
-            <span className="text-xs text-white/70">/100</span>
-          </div>
-        </div>
-        <div className="flex-1">
-          <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Privacy Score: {score >= 90 ? "Excellent" : score >= 75 ? "Good" : "Fair"}</h3>
-          <p className="text-white/70 text-sm leading-relaxed mb-4">
-            Your data is well protected. Core analysis runs on your device. Cloud sync uses end-to-end encryption.
+      {/* Privacy Status */}
+      <div className="bg-gradient-to-br from-[#1C2B4A] to-[#0D47A1] rounded-2xl p-6 text-white flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h3 className="text-xl font-bold mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Privacy Status</h3>
+          <p className="text-white/70 text-sm leading-relaxed max-w-xl">
+            Your data is protected by industry standard security practices. Core user actions are audited and securely managed.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {["E2E Encrypted", "SOC 2 Type II", "GDPR Compliant", "CCPA Compliant"].map((badge) => (
-              <span key={badge} className="text-xs bg-white/10 text-white px-3 py-1 rounded-full">{badge}</span>
-            ))}
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10 grid grid-cols-2 gap-x-6 gap-y-2 flex-shrink-0">
+          <div className="flex items-center gap-2 text-sm text-white/90">
+            <CheckCircle size={16} className="text-[#8AB4F8]" />
+            <span>Firebase Auth</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-white/90">
+            <CheckCircle size={16} className="text-[#8AB4F8]" />
+            <span>Secure Connection</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-white/90">
+            <CheckCircle size={16} className="text-[#8AB4F8]" />
+            <span>Data Export Available</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-white/90">
+            <CheckCircle size={16} className="text-[#8AB4F8]" />
+            <span>User Data Isolation</span>
           </div>
         </div>
       </div>
@@ -3895,71 +3894,22 @@ export function PrivacyPage() {
         ))}
       </div>
 
+      {/* Data Separation */}
       <div className="bg-card rounded-2xl border border-border p-6">
-        <h3 className="font-semibold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Data Separation</h3>
+        <h3 className="font-semibold text-foreground mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Data Separation</h3>
+        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+          Gemini receives only the financial context required to answer your questions. Your uploaded data is processed only for your authenticated account.
+        </p>
         <div className="space-y-4">
           {[
             { label: "Authentication Provider", value: "Firebase Authentication" },
             { label: "AI Provider", value: "Gemini" },
             { label: "Financial Data Storage", value: "Local Backend Database" },
-            { label: "AI Data Sharing", value: "Summary Metrics Only" },
+            { label: "AI Data Sharing", value: "Context-specific queries only" },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between gap-4 border-b border-border pb-4 last:border-0 last:pb-0">
               <span className="text-sm font-medium text-foreground">{label}</span>
               <span className="text-sm text-muted-foreground text-right">{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Data controls */}
-      <div className="bg-card rounded-2xl border border-border p-6">
-        <h3 className="font-semibold text-foreground mb-5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Your Data Controls</h3>
-        <div className="space-y-4">
-          {[
-            {
-              key: "cloudSync" as const, label: "Cloud Sync & Backup",
-              desc: "Encrypted backup across your devices. Uses AES-256. FinPilot cannot read your data.",
-              badge: "Optional",
-            },
-            {
-              key: "aiPersonalization" as const, label: "AI Personalization",
-              desc: "Allows AI to learn your financial patterns for better recommendations. Processed locally.",
-              badge: "Recommended",
-            },
-            {
-              key: "crashReports" as const, label: "Anonymous Crash Reports",
-              desc: "Sends anonymized error logs to help improve stability. No financial data included.",
-              badge: "Optional",
-            },
-            {
-              key: "analytics" as const, label: "Usage Analytics",
-              desc: "Shares anonymized feature usage to help prioritize improvements. Opt-out anytime.",
-              badge: "Optional",
-            },
-          ].map(({ key, label, desc, badge }) => (
-            <div key={key} className="flex items-start gap-4 py-4 border-b border-border last:border-0">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-foreground">{label}</p>
-                  <Badge color="gray">{badge}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{desc}</p>
-              </div>
-              <button
-                onClick={() => setControls((c) => ({ ...c, [key]: !c[key] }))}
-                className={cn(
-                  "relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 mt-0.5",
-                  controls[key] ? "bg-primary" : "bg-muted"
-                )}
-              >
-                <div
-                  className={cn(
-                    "absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200",
-                    controls[key] ? "translate-x-4" : "translate-x-0.5"
-                  )}
-                />
-              </button>
             </div>
           ))}
         </div>
@@ -3975,13 +3925,13 @@ export function PrivacyPage() {
           <p className="text-sm text-muted-foreground mb-4">Download a complete copy of all your financial data in JSON or CSV format.</p>
           <button onClick={() => setExportModalOpen(true)} className="text-sm text-primary font-medium hover:underline">Request data export →</button>
         </div>
-        <div className="bg-card rounded-2xl p-5 border border-[#FCE8E6]">
+        <div className="bg-card rounded-2xl p-5 border border-border opacity-70">
           <div className="flex items-center gap-3 mb-3">
-            <X size={18} className="text-[#D93025]" />
+            <X size={18} className="text-muted-foreground" />
             <h4 className="font-semibold text-foreground">Delete My Account</h4>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
-          <button className="text-sm text-[#D93025] font-medium hover:underline">Request account deletion →</button>
+          <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data. This action is currently unavailable.</p>
+          <button disabled className="text-sm text-muted-foreground font-medium cursor-not-allowed">Account Deletion Unavailable</button>
         </div>
       </div>
 
