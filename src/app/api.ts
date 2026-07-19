@@ -313,3 +313,9 @@ export function updateUserSettings(payload: UserSettingsUpdateRequest): Promise<
     body: JSON.stringify(payload),
   });
 }
+
+export function deleteAccount(): Promise<{ status: string; message: string }> {
+  return request<{ status: string; message: string }>("/account", {
+    method: "DELETE",
+  });
+}

@@ -30,6 +30,7 @@ import {
   createDecision,
   getUserSettings,
   updateUserSettings,
+  deleteAccount,
   type DashboardResponse,
   type ForecastResponse,
   type GoalsResponse,
@@ -40,6 +41,7 @@ import {
 import { AuthUserAvatar } from "../components/auth/AuthUserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import type { User as FirebaseUser } from "firebase/auth";
+import { deleteUser as firebaseDeleteUser } from "firebase/auth";
 import { firebaseAuth } from "../lib/firebase";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -3578,6 +3580,7 @@ export function AIAssistantPage() {
 
 export function PrivacyPage() {
   const { addNotification } = useNotifications();
+  const { user, logout } = useAuth();
   const [controls, setControls] = useState({
     cloudSync: true, analytics: false, crashReports: true, aiPersonalization: true,
   });
@@ -3586,8 +3589,51 @@ export function PrivacyPage() {
   const [exportFormat, setExportFormat] = useState<"csv" | "pdf">("csv");
   const [exporting, setExporting] = useState(false);
 
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const score = Object.values(controls).filter(Boolean).length === 0 ? 100 :
     controls.cloudSync ? 82 : 95;
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      // Step 1: Delete all backend data
+      await deleteAccount();
+
+      // Step 2: Delete Firebase auth account
+      if (user) {
+        try {
+          await firebaseDeleteUser(user);
+        } catch (firebaseErr: any) {
+          if (firebaseErr?.code === "auth/requires-recent-login") {
+            toast.error("For your security, please sign in again before deleting your account.");
+            await logout();
+            return;
+          }
+          console.error("Firebase user deletion failed:", firebaseErr);
+          // Backend data is already deleted, proceed to sign out
+        }
+      }
+
+      // Step 3: Clear all local storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Step 4: Sign out and show confirmation
+      try {
+        await logout();
+      } catch {
+        // User may already be deleted from Firebase, ignore signOut errors
+      }
+
+      toast.success("Your account has been permanently deleted.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to delete account.";
+      toast.error(msg);
+      setDeleting(false);
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -3925,13 +3971,13 @@ export function PrivacyPage() {
           <p className="text-sm text-muted-foreground mb-4">Download a complete copy of all your financial data in JSON or CSV format.</p>
           <button onClick={() => setExportModalOpen(true)} className="text-sm text-primary font-medium hover:underline">Request data export →</button>
         </div>
-        <div className="bg-card rounded-2xl p-5 border border-border opacity-70">
+        <div className="bg-card rounded-2xl p-5 border border-[#FCE8E6]">
           <div className="flex items-center gap-3 mb-3">
-            <X size={18} className="text-muted-foreground" />
+            <X size={18} className="text-[#D93025]" />
             <h4 className="font-semibold text-foreground">Delete My Account</h4>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data. This action is currently unavailable.</p>
-          <button disabled className="text-sm text-muted-foreground font-medium cursor-not-allowed">Account Deletion Unavailable</button>
+          <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+          <button onClick={() => setDeleteModalOpen(true)} className="text-sm text-[#D93025] font-medium hover:underline">Request account deletion →</button>
         </div>
       </div>
 
@@ -3988,6 +4034,55 @@ export function PrivacyPage() {
                 {exporting ? "Preparing..." : "Export"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+            {!deleting && (
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            )}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#D93025]/10 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} className="text-[#D93025]" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Delete your account?
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              This action is permanent. Your financial data, goals, decisions, uploaded transactions, and settings will be permanently removed and cannot be recovered.
+            </p>
+            {deleting ? (
+              <div className="flex items-center justify-center gap-3 py-3">
+                <div className="w-5 h-5 border-2 border-[#D93025] border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-medium text-muted-foreground">Deleting account...</span>
+              </div>
+            ) : (
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  className="inline-flex items-center gap-1.5 bg-[#D93025] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#B3261E] transition-colors"
+                >
+                  Delete Account
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
