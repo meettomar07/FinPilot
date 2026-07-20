@@ -1501,6 +1501,36 @@ export function formatFullDate(dateStr: string | null | undefined): string {
   return d.toLocaleDateString("en-US", options);
 }
 
+export function getCurrentLocalDate(): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return new Date().toLocaleDateString("en-US", options);
+}
+
+export function getGreetingSummary(dashboard: DashboardResponse | null, hasNoData: boolean): string {
+  if (hasNoData || !dashboard) {
+    return "Ready to start analyzing your finances?";
+  }
+  
+  const health = dashboard.financialHealth ?? 0;
+  const savings = dashboard.savingsRate ?? 0;
+  const emergency = dashboard.emergencyFundMonths ?? 0;
+
+  if (health >= 80 && savings >= 20 && emergency >= 6) {
+    return "Your finances look excellent! High health score and a very healthy emergency runway.";
+  } else if (health >= 70 && savings >= 10) {
+    return "Your finances look healthy today. Solid savings rate and good health score.";
+  } else if (health < 50 || savings < 0) {
+    return "Your finances need some work. Take a look at budgeting and raising your savings rate.";
+  } else {
+    return "Your finances are stable, but there is room to optimize your savings and emergency fund.";
+  }
+}
+
 export function DashboardPage({
   onNavigate,
   setSubtitle,
@@ -1812,13 +1842,9 @@ export function DashboardPage({
           <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             Good morning, {getUserFirstName(user)} 👋
           </h2>
-          {dashboard?.summary.date_range_end ? (
-            <p className="text-muted-foreground mt-1">
-              {formatFullDate(dashboard.summary.date_range_end)} · Your finances look healthy today.
-            </p>
-          ) : (
-            <p className="text-muted-foreground mt-1">Ready to start analyzing your finances?</p>
-          )}
+          <p className="text-muted-foreground mt-1">
+            {getCurrentLocalDate()} · {getGreetingSummary(dashboard, hasNoData)}
+          </p>
         </div>
         <input
           type="file"
