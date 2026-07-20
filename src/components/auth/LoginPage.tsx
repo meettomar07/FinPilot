@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles, X, CheckCircle } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { toast } from "sonner";
 
@@ -32,17 +32,23 @@ export function LoginPage() {
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [resetSuccessModalOpen, setResetSuccessModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!forgotModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !resetting) {
-        setForgotModalOpen(false);
+      if (e.key === "Escape") {
+        if (forgotModalOpen && !resetting) {
+          setForgotModalOpen(false);
+        } else if (resetSuccessModalOpen) {
+          setResetSuccessModalOpen(false);
+        }
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
+    if (forgotModalOpen || resetSuccessModalOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [forgotModalOpen, resetting]);
+  }, [forgotModalOpen, resetSuccessModalOpen, resetting]);
 
   const handleSendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +76,7 @@ export function LoginPage() {
       toast.success("Password reset email sent successfully. Please check your inbox (and spam folder if needed).");
       setForgotModalOpen(false);
       setResetEmail("");
+      setResetSuccessModalOpen(true);
     } catch (err: any) {
       console.error("Password reset error:", err);
       let errorMsg = "Failed to send password reset email. Please try again.";
@@ -400,6 +407,57 @@ export function LoginPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Success Modal */}
+      {resetSuccessModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          {/* Backdrop Click Handler */}
+          <div className="absolute inset-0" onClick={() => setResetSuccessModalOpen(false)} />
+          
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-xl relative z-10 text-center animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setResetSuccessModalOpen(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+            
+            <div className="w-12 h-12 rounded-full bg-[#34A853]/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={24} className="text-[#34A853]" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-foreground mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Check your email
+            </h3>
+            
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed text-left">
+              We've sent a password reset link to your email address.
+              <br /><br />
+              Please check your inbox and, if you don't see it within a minute, check your Spam or Junk folder as well.
+              <br /><br />
+              Once you've reset your password, return to FinPilot and sign in with your new password.
+            </p>
+
+            <div className="bg-muted/50 rounded-xl p-4 mb-6 text-left text-xs text-muted-foreground space-y-2 border border-border/40">
+              <p className="font-semibold text-foreground text-sm mb-1">Didn't receive the email?</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Wait a minute and refresh your inbox.</li>
+                <li>Check your Spam/Junk folder.</li>
+                <li>Verify that you entered the correct email address.</li>
+              </ul>
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => setResetSuccessModalOpen(false)}
+              className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white font-bold h-11 rounded-xl transition-all shadow-md"
+            >
+              Got it
+            </Button>
           </div>
         </div>
       )}
