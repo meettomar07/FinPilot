@@ -1,0 +1,326 @@
+date,description,amount,balance
+2026-01-15,Uber Ride Sharing Service,-221.32,44778.68
+2026-01-16,HPCL Fuel Station Petro,-1771.57,43007.11
+2026-01-16,ATM Cash Withdrawal - HDFC Bank,-1118.66,41888.45
+2026-01-16,Swiggy Online Food Delivery,-500.95,41387.5
+2026-01-17,Amazon India Marketplace,-1315.18,40072.32
+2026-01-17,Swiggy Online Food Delivery,-368.95,39703.37
+2026-01-18,Blinkit Grocery Shopping,-1372.75,38330.62
+2026-01-18,Zomato Restaurant Delivery,-536.17,37794.45
+2026-01-18,Apollo Pharmacy Biotech,-284.82,37509.63
+2026-01-19,Amazon India Marketplace,-3234.26,34275.37
+2026-01-19,Swiggy Online Food Delivery,-423.2,33852.17
+2026-01-21,Blinkit Grocery Shopping,-785.9,33066.27
+2026-01-21,Amazon India Marketplace,-1736.3,31329.97
+2026-01-22,Amazon India Marketplace,-2561.64,28768.33
+2026-01-22,Blinkit Grocery Shopping,-1216.6,27551.73
+2026-01-26,Blinkit Grocery Shopping,-1053.18,26498.55
+2026-01-26,Uber Ride Sharing Service,-362.7,26135.85
+2026-01-26,Uber Ride Sharing Service,-432.98,25702.87
+2026-01-27,Zomato Restaurant Delivery,-286.98,25415.89
+2026-01-27,HPCL Fuel Station Petro,-1653.13,23762.76
+2026-01-28,Swiggy Online Food Delivery,-425.43,23337.33
+2026-01-28,Blinkit Grocery Shopping,-1057.93,22279.4
+2026-01-29,Uber Ride Sharing Service,-583.82,21695.58
+2026-01-29,HPCL Fuel Station Petro,-1464.17,20231.41
+2026-01-29,Blinkit Grocery Shopping,-516.06,19715.35
+2026-01-30,Zomato Restaurant Delivery,-482.57,19232.78
+2026-01-30,Uber Ride Sharing Service,-222.74,19010.04
+2026-01-31,Apollo Pharmacy Biotech,-148.39,18861.65
+2026-01-31,Apollo Pharmacy Biotech,-893.96,17967.69
+2026-01-31,Uber Ride Sharing Service,-445.32,17522.37
+2026-02-01,Monthly Salary Credit - FinPilot Corp,75000.0,92522.37
+2026-02-01,House Rent Transfer to Landlord,-15000.0,77522.37
+2026-02-01,SIP Mutual Fund Investment Scheme,-5000.0,72522.37
+2026-02-01,Amazon India Marketplace,-2423.32,70099.05
+2026-02-01,Blinkit Grocery Shopping,-612.83,69486.22
+2026-02-02,Blinkit Grocery Shopping,-1408.13,68078.09
+2026-02-02,Swiggy Online Food Delivery,-602.72,67475.37
+2026-02-03,Zomato Restaurant Delivery,-336.73,67138.64
+2026-02-05,Netflix Monthly Streaming Subscription,-649.0,66489.63999999998
+2026-02-05,Spotify Music Premium Subscription,-119.0,66370.63999999998
+2026-02-05,State Electricity Board Payment,-2617.61,63753.03
+2026-02-05,Blinkit Grocery Shopping,-1126.94,62626.09
+2026-02-06,Swiggy Online Food Delivery,-386.29,62239.8
+2026-02-06,Swiggy Online Food Delivery,-228.42,62011.38
+2026-02-06,Apollo Pharmacy Biotech,-1111.83,60899.55
+2026-02-07,Blinkit Grocery Shopping,-338.64,60560.91
+2026-02-07,Uber Ride Sharing Service,-173.45,60387.46
+2026-02-08,Amazon India Marketplace,-1974.09,58413.37
+2026-02-09,Blinkit Grocery Shopping,-1449.12,56964.25
+2026-02-09,HPCL Fuel Station Petro,-879.49,56084.76
+2026-02-09,Uber Ride Sharing Service,-192.32,55892.44
+2026-02-10,Swiggy Online Food Delivery,-536.18,55356.26
+2026-02-10,Uber Ride Sharing Service,-400.02,54956.24
+2026-02-11,Uber Ride Sharing Service,-139.53,54816.71
+2026-02-11,HPCL Fuel Station Petro,-1070.71,53746.0
+2026-02-11,Zomato Restaurant Delivery,-555.3,53190.7
+2026-02-13,HPCL Fuel Station Petro,-1605.27,51585.43
+2026-02-13,ATM Cash Withdrawal - HDFC Bank,-4074.74,47510.69
+2026-02-14,Zomato Restaurant Delivery,-756.16,46754.53
+2026-02-14,ATM Cash Withdrawal - HDFC Bank,-4620.92,42133.61
+2026-02-14,HPCL Fuel Station Petro,-702.93,41430.68
+2026-02-16,Zomato Restaurant Delivery,-535.11,40895.57
+2026-02-16,Zomato Restaurant Delivery,-742.5,40153.07
+2026-02-16,Zomato Restaurant Delivery,-905.51,39247.56
+2026-02-18,Amazon India Marketplace,-1615.18,37632.38
+2026-02-18,Uber Ride Sharing Service,-569.07,37063.31
+2026-02-19,Uber Ride Sharing Service,-144.49,36918.82
+2026-02-19,Uber Ride Sharing Service,-400.13,36518.69
+2026-02-19,Zomato Restaurant Delivery,-487.6,36031.09
+2026-02-20,Amazon India Marketplace,-1852.3,34178.79
+2026-02-21,Swiggy Online Food Delivery,-564.61,33614.18
+2026-02-21,Zomato Restaurant Delivery,-884.92,32729.26
+2026-02-23,Uber Ride Sharing Service,-165.69,32563.57
+2026-02-23,HPCL Fuel Station Petro,-801.01,31762.56
+2026-02-24,Amazon India Marketplace,-546.57,31215.99
+2026-02-24,Uber Ride Sharing Service,-540.4,30675.59
+2026-02-25,Apollo Pharmacy Biotech,-1116.04,29559.55
+2026-02-25,Apollo Pharmacy Biotech,-611.27,28948.28
+2026-02-26,Zomato Restaurant Delivery,-995.93,27952.35
+2026-02-26,ATM Cash Withdrawal - HDFC Bank,-3081.57,24870.78
+2026-02-26,Apollo Pharmacy Biotech,-326.45,24544.33
+2026-02-27,Blinkit Grocery Shopping,-1396.8,23147.53
+2026-02-28,Zomato Restaurant Delivery,-693.89,22453.64
+2026-02-28,Apollo Pharmacy Biotech,-643.33,21810.31
+2026-02-28,Uber Ride Sharing Service,-442.81,21367.5
+2026-03-01,Monthly Salary Credit - FinPilot Corp,75000.0,96367.5
+2026-03-01,House Rent Transfer to Landlord,-15000.0,81367.5
+2026-03-01,SIP Mutual Fund Investment Scheme,-5000.0,76367.5
+2026-03-01,Uber Ride Sharing Service,-210.22,76157.28
+2026-03-02,HPCL Fuel Station Petro,-1340.29,74816.99
+2026-03-02,Apollo Pharmacy Biotech,-935.02,73881.97
+2026-03-04,Uber Ride Sharing Service,-301.86,73580.11
+2026-03-04,Swiggy Online Food Delivery,-663.48,72916.63
+2026-03-04,Zomato Restaurant Delivery,-252.88,72663.75
+2026-03-05,Netflix Monthly Streaming Subscription,-649.0,72014.75
+2026-03-05,Spotify Music Premium Subscription,-119.0,71895.75
+2026-03-05,State Electricity Board Payment,-1751.97,70143.78
+2026-03-05,Swiggy Online Food Delivery,-232.77,69911.01
+2026-03-06,HPCL Fuel Station Petro,-1737.49,68173.52
+2026-03-07,Blinkit Grocery Shopping,-306.73,67866.79
+2026-03-07,Uber Ride Sharing Service,-381.36,67485.43
+2026-03-07,Blinkit Grocery Shopping,-1000.9,66484.53
+2026-03-08,Apollo Pharmacy Biotech,-416.22,66068.31
+2026-03-08,Swiggy Online Food Delivery,-349.48,65718.83
+2026-03-09,HPCL Fuel Station Petro,-1160.24,64558.59
+2026-03-09,ATM Cash Withdrawal - HDFC Bank,-3578.92,60979.67
+2026-03-10,Uber Ride Sharing Service,-298.52,60681.15
+2026-03-10,Uber Ride Sharing Service,-400.27,60280.88
+2026-03-10,ATM Cash Withdrawal - HDFC Bank,-2917.3,57363.58
+2026-03-11,Swiggy Online Food Delivery,-449.44,56914.14
+2026-03-11,Amazon India Marketplace,-855.67,56058.47
+2026-03-12,Uber Ride Sharing Service,-551.04,55507.43
+2026-03-13,HPCL Fuel Station Petro,-1567.02,53940.41
+2026-03-13,Apollo Pharmacy Biotech,-951.58,52988.83
+2026-03-14,Blinkit Grocery Shopping,-1143.65,51845.18
+2026-03-14,Uber Ride Sharing Service,-191.1,51654.08
+2026-03-14,Uber Ride Sharing Service,-153.53,51500.55
+2026-03-16,Swiggy Online Food Delivery,-443.77,51056.78
+2026-03-16,Uber Ride Sharing Service,-448.77,50608.01
+2026-03-16,Blinkit Grocery Shopping,-425.47,50182.54
+2026-03-17,Blinkit Grocery Shopping,-939.24,49243.3
+2026-03-17,Apollo Pharmacy Biotech,-598.12,48645.18
+2026-03-17,ATM Cash Withdrawal - HDFC Bank,-2298.27,46346.91
+2026-03-19,ATM Cash Withdrawal - HDFC Bank,-2551.28,43795.63
+2026-03-20,Uber Ride Sharing Service,-165.62,43630.01
+2026-03-20,Zomato Restaurant Delivery,-457.69,43172.32
+2026-03-21,Zomato Restaurant Delivery,-885.41,42286.91
+2026-03-21,Zomato Restaurant Delivery,-826.1,41460.81
+2026-03-24,Swiggy Online Food Delivery,-308.21,41152.6
+2026-03-25,Blinkit Grocery Shopping,-653.79,40498.81
+2026-03-26,Uber Ride Sharing Service,-128.89,40369.92
+2026-03-26,Amazon India Marketplace,-3580.17,36789.75
+2026-03-26,HPCL Fuel Station Petro,-993.44,35796.31
+2026-03-27,Uber Ride Sharing Service,-404.9,35391.41
+2026-03-27,Blinkit Grocery Shopping,-1058.25,34333.16
+2026-03-28,Amazon India Marketplace,-935.37,33397.79
+2026-03-28,Zomato Restaurant Delivery,-722.86,32674.93
+2026-03-29,Blinkit Grocery Shopping,-367.37,32307.56
+2026-03-31,Zomato Restaurant Delivery,-664.91,31642.65
+2026-03-31,Blinkit Grocery Shopping,-1495.1,30147.55
+2026-04-01,Monthly Salary Credit - FinPilot Corp,75000.0,105147.55000000002
+2026-04-01,House Rent Transfer to Landlord,-15000.0,90147.55000000002
+2026-04-01,SIP Mutual Fund Investment Scheme,-5000.0,85147.55000000002
+2026-04-01,Apollo Pharmacy Biotech,-599.13,84548.42
+2026-04-01,Blinkit Grocery Shopping,-754.74,83793.68
+2026-04-03,Uber Ride Sharing Service,-428.51,83365.17
+2026-04-03,Zomato Restaurant Delivery,-912.51,82452.66
+2026-04-04,Amazon India Marketplace,-1535.26,80917.4
+2026-04-05,Netflix Monthly Streaming Subscription,-649.0,80268.40000000002
+2026-04-05,Spotify Music Premium Subscription,-119.0,80149.40000000002
+2026-04-05,State Electricity Board Payment,-3123.11,77026.29
+2026-04-06,Swiggy Online Food Delivery,-222.79,76803.5
+2026-04-08,Uber Ride Sharing Service,-265.56,76537.94
+2026-04-08,HPCL Fuel Station Petro,-1062.09,75475.85
+2026-04-08,Swiggy Online Food Delivery,-584.51,74891.34
+2026-04-09,Amazon India Marketplace,-3549.39,71341.95
+2026-04-09,Uber Ride Sharing Service,-592.96,70748.99
+2026-04-09,Zomato Restaurant Delivery,-541.41,70207.58
+2026-04-11,Uber Ride Sharing Service,-165.99,70041.59
+2026-04-11,HPCL Fuel Station Petro,-774.75,69266.84
+2026-04-11,Blinkit Grocery Shopping,-1222.62,68044.22
+2026-04-13,Zomato Restaurant Delivery,-541.59,67502.63
+2026-04-13,Swiggy Online Food Delivery,-636.43,66866.2
+2026-04-14,HPCL Fuel Station Petro,-735.51,66130.69
+2026-04-14,Swiggy Online Food Delivery,-722.51,65408.18
+2026-04-16,Amazon India Marketplace,-2768.82,62639.36
+2026-04-16,Apollo Pharmacy Biotech,-1154.23,61485.13
+2026-04-17,Uber Ride Sharing Service,-337.82,61147.31
+2026-04-17,Zomato Restaurant Delivery,-610.01,60537.3
+2026-04-17,Uber Ride Sharing Service,-376.83,60160.47
+2026-04-18,Uber Ride Sharing Service,-457.36,59703.11
+2026-04-19,HPCL Fuel Station Petro,-1424.11,58279.0
+2026-04-20,Swiggy Online Food Delivery,-225.38,58053.62
+2026-04-20,Swiggy Online Food Delivery,-757.59,57296.03
+2026-04-21,Uber Ride Sharing Service,-360.65,56935.38
+2026-04-21,Blinkit Grocery Shopping,-1405.22,55530.16
+2026-04-23,Zomato Restaurant Delivery,-603.26,54926.9
+2026-04-24,Amazon India Marketplace,-757.99,54168.91
+2026-04-24,Swiggy Online Food Delivery,-760.85,53408.06
+2026-04-24,HPCL Fuel Station Petro,-1816.02,51592.04
+2026-04-25,Zomato Restaurant Delivery,-872.9,50719.14
+2026-04-26,Blinkit Grocery Shopping,-345.37,50373.77
+2026-04-26,Zomato Restaurant Delivery,-511.59,49862.18
+2026-04-26,Swiggy Online Food Delivery,-320.99,49541.19
+2026-04-27,Blinkit Grocery Shopping,-983.34,48557.85
+2026-04-28,Uber Ride Sharing Service,-296.85,48261.0
+2026-04-28,Amazon India Marketplace,-3031.54,45229.46
+2026-04-29,HPCL Fuel Station Petro,-1113.04,44116.42
+2026-04-29,Zomato Restaurant Delivery,-642.71,43473.71
+2026-04-30,Amazon India Marketplace,-2954.06,40519.65
+2026-04-30,Amazon India Marketplace,-908.9,39610.75
+2026-04-30,Swiggy Online Food Delivery,-306.17,39304.58
+2026-05-01,Monthly Salary Credit - FinPilot Corp,75000.0,114304.58000000005
+2026-05-01,House Rent Transfer to Landlord,-15000.0,99304.58000000005
+2026-05-01,SIP Mutual Fund Investment Scheme,-5000.0,94304.58000000005
+2026-05-01,Swiggy Online Food Delivery,-682.92,93621.66
+2026-05-01,ATM Cash Withdrawal - HDFC Bank,-1987.08,91634.58
+2026-05-02,Swiggy Online Food Delivery,-661.0,90973.58
+2026-05-03,Uber Ride Sharing Service,-330.84,90642.74
+2026-05-03,Uber Ride Sharing Service,-586.37,90056.37
+2026-05-03,Zomato Restaurant Delivery,-406.63,89649.74
+2026-05-04,Uber Ride Sharing Service,-235.44,89414.3
+2026-05-05,Netflix Monthly Streaming Subscription,-649.0,88765.30000000005
+2026-05-05,Spotify Music Premium Subscription,-119.0,88646.30000000005
+2026-05-05,State Electricity Board Payment,-3378.13,85268.17
+2026-05-05,Swiggy Online Food Delivery,-616.11,84652.06
+2026-05-05,HPCL Fuel Station Petro,-1822.16,82829.9
+2026-05-06,Amazon India Marketplace,-2139.31,80690.59
+2026-05-07,Apollo Pharmacy Biotech,-257.65,80432.94
+2026-05-07,Zomato Restaurant Delivery,-201.95,80230.99
+2026-05-07,Amazon India Marketplace,-1471.97,78759.02
+2026-05-08,Swiggy Online Food Delivery,-453.47,78305.55
+2026-05-09,Swiggy Online Food Delivery,-438.19,77867.36
+2026-05-10,Amazon India Marketplace,-3604.81,74262.55
+2026-05-11,Zomato Restaurant Delivery,-892.3,73370.25
+2026-05-11,Zomato Restaurant Delivery,-903.05,72467.2
+2026-05-11,Zomato Restaurant Delivery,-944.04,71523.16
+2026-05-12,Uber Ride Sharing Service,-260.25,71262.91
+2026-05-16,Zomato Restaurant Delivery,-655.1,70607.81
+2026-05-16,HPCL Fuel Station Petro,-990.13,69617.68
+2026-05-16,Apollo Pharmacy Biotech,-232.92,69384.76
+2026-05-18,Zomato Restaurant Delivery,-946.07,68438.69
+2026-05-18,Apollo Pharmacy Biotech,-497.29,67941.4
+2026-05-20,Swiggy Online Food Delivery,-152.32,67789.08
+2026-05-21,Apollo Pharmacy Biotech,-453.78,67335.3
+2026-05-22,Swiggy Online Food Delivery,-755.92,66579.38
+2026-05-23,Uber Ride Sharing Service,-440.82,66138.56
+2026-05-23,Swiggy Online Food Delivery,-239.53,65899.03
+2026-05-23,Uber Ride Sharing Service,-326.35,65572.68
+2026-05-24,Uber Ride Sharing Service,-188.49,65384.19
+2026-05-24,ATM Cash Withdrawal - HDFC Bank,-2318.6,63065.59
+2026-05-25,Uber Ride Sharing Service,-382.52,62683.07
+2026-05-25,Swiggy Online Food Delivery,-386.2,62296.87
+2026-05-25,Uber Ride Sharing Service,-409.01,61887.86
+2026-05-27,Blinkit Grocery Shopping,-1201.69,60686.17
+2026-05-27,Amazon India Marketplace,-3398.18,57287.99
+2026-05-28,Apollo Pharmacy Biotech,-546.44,56741.55
+2026-05-28,Zomato Restaurant Delivery,-766.55,55975.0
+2026-05-29,Swiggy Online Food Delivery,-736.33,55238.67
+2026-05-30,Uber Ride Sharing Service,-463.64,54775.03
+2026-05-30,Swiggy Online Food Delivery,-344.17,54430.86
+2026-05-31,Zomato Restaurant Delivery,-597.1,53833.76
+2026-05-31,HPCL Fuel Station Petro,-524.92,53308.84
+2026-06-01,Monthly Salary Credit - FinPilot Corp,75000.0,128308.84000000003
+2026-06-01,House Rent Transfer to Landlord,-15000.0,113308.84000000003
+2026-06-01,SIP Mutual Fund Investment Scheme,-5000.0,108308.84000000003
+2026-06-01,Zomato Restaurant Delivery,-980.12,107328.72
+2026-06-02,Blinkit Grocery Shopping,-709.27,106619.45
+2026-06-02,Swiggy Online Food Delivery,-283.04,106336.41
+2026-06-02,Swiggy Online Food Delivery,-518.48,105817.93
+2026-06-03,Blinkit Grocery Shopping,-1492.66,104325.27
+2026-06-03,HPCL Fuel Station Petro,-1498.97,102826.3
+2026-06-03,Apollo Pharmacy Biotech,-1177.31,101648.99
+2026-06-04,ATM Cash Withdrawal - HDFC Bank,-4561.18,97087.81
+2026-06-04,Swiggy Online Food Delivery,-339.33,96748.48
+2026-06-05,Netflix Monthly Streaming Subscription,-649.0,96099.48000000003
+2026-06-05,Spotify Music Premium Subscription,-119.0,95980.48000000003
+2026-06-05,State Electricity Board Payment,-2963.63,93016.85
+2026-06-05,Swiggy Online Food Delivery,-433.17,92583.68
+2026-06-05,Uber Ride Sharing Service,-145.2,92438.48
+2026-06-06,Swiggy Online Food Delivery,-338.36,92100.12
+2026-06-06,Uber Ride Sharing Service,-436.87,91663.25
+2026-06-06,Blinkit Grocery Shopping,-815.4,90847.85
+2026-06-07,Uber Ride Sharing Service,-125.18,90722.67
+2026-06-07,Uber Ride Sharing Service,-526.88,90195.79
+2026-06-11,Swiggy Online Food Delivery,-473.52,89722.27
+2026-06-11,Amazon India Marketplace,-1063.06,88659.21
+2026-06-12,Swiggy Online Food Delivery,-232.48,88426.73
+2026-06-12,Uber Ride Sharing Service,-417.19,88009.54
+2026-06-12,ATM Cash Withdrawal - HDFC Bank,-2183.23,85826.31
+2026-06-13,Amazon India Marketplace,-749.41,85076.9
+2026-06-14,Uber Ride Sharing Service,-194.46,84882.44
+2026-06-14,Uber Ride Sharing Service,-574.59,84307.85
+2026-06-16,HPCL Fuel Station Petro,-1714.82,82593.03
+2026-06-16,Swiggy Online Food Delivery,-251.29,82341.74
+2026-06-16,Uber Ride Sharing Service,-340.88,82000.86
+2026-06-17,Swiggy Online Food Delivery,-501.29,81499.57
+2026-06-17,Zomato Restaurant Delivery,-898.84,80600.73
+2026-06-18,Uber Ride Sharing Service,-443.32,80157.41
+2026-06-19,Amazon India Marketplace,-1754.68,78402.73
+2026-06-19,Uber Ride Sharing Service,-423.03,77979.7
+2026-06-20,Uber Ride Sharing Service,-481.74,77497.96
+2026-06-21,Amazon India Marketplace,-649.73,76848.23
+2026-06-21,Zomato Restaurant Delivery,-235.44,76612.79
+2026-06-21,Swiggy Online Food Delivery,-733.9,75878.89
+2026-06-22,Uber Ride Sharing Service,-588.95,75289.94
+2026-06-22,Apollo Pharmacy Biotech,-472.32,74817.62
+2026-06-24,Zomato Restaurant Delivery,-721.26,74096.36
+2026-06-24,Uber Ride Sharing Service,-586.51,73509.85
+2026-06-25,Zomato Restaurant Delivery,-425.38,73084.47
+2026-06-26,Uber Ride Sharing Service,-406.0,72678.47
+2026-06-26,Zomato Restaurant Delivery,-774.8,71903.67
+2026-06-27,Zomato Restaurant Delivery,-738.28,71165.39
+2026-06-27,Blinkit Grocery Shopping,-359.76,70805.63
+2026-06-27,Swiggy Online Food Delivery,-697.96,70107.67
+2026-06-28,Uber Ride Sharing Service,-180.78,69926.89
+2026-06-29,Swiggy Online Food Delivery,-676.07,69250.82
+2026-06-30,Amazon India Marketplace,-2678.4,66572.42
+2026-06-30,Swiggy Online Food Delivery,-193.62,66378.8
+2026-06-30,Blinkit Grocery Shopping,-1208.53,65170.27
+2026-07-01,Monthly Salary Credit - FinPilot Corp,75000.0,140170.27000000005
+2026-07-01,House Rent Transfer to Landlord,-15000.0,125170.27000000005
+2026-07-01,SIP Mutual Fund Investment Scheme,-5000.0,120170.27000000005
+2026-07-02,Uber Ride Sharing Service,-502.72,119667.55
+2026-07-02,ATM Cash Withdrawal - HDFC Bank,-2962.43,116705.12
+2026-07-03,Blinkit Grocery Shopping,-1327.52,115377.6
+2026-07-03,Amazon India Marketplace,-3253.23,112124.37
+2026-07-03,HPCL Fuel Station Petro,-588.25,111536.12
+2026-07-04,HPCL Fuel Station Petro,-1644.86,109891.26
+2026-07-05,Netflix Monthly Streaming Subscription,-649.0,109242.26000000005
+2026-07-05,Spotify Music Premium Subscription,-119.0,109123.26000000005
+2026-07-05,State Electricity Board Payment,-3051.18,106072.08
+2026-07-06,Uber Ride Sharing Service,-532.19,105539.89
+2026-07-06,HPCL Fuel Station Petro,-818.04,104721.85
+2026-07-07,Zomato Restaurant Delivery,-306.49,104415.36
+2026-07-07,ATM Cash Withdrawal - HDFC Bank,-3808.69,100606.67
+2026-07-08,Zomato Restaurant Delivery,-445.21,100161.46
+2026-07-08,Blinkit Grocery Shopping,-745.08,99416.38
+2026-07-10,Uber Ride Sharing Service,-407.32,99009.06
+2026-07-13,Swiggy Online Food Delivery,-734.74,98274.32
+2026-07-13,Apollo Pharmacy Biotech,-338.54,97935.78
+2026-07-13,Amazon India Marketplace,-2312.53,95623.25
+2026-07-15,Apollo Pharmacy Biotech,-960.92,94662.33
+2026-07-15,Apollo Pharmacy Biotech,-1117.24,93545.09
+2026-07-15,Zomato Restaurant Delivery,-869.24,92675.85

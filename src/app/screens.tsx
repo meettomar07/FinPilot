@@ -1513,7 +1513,32 @@ export function DashboardPage({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(false);
   const isMountedRef = useRef(true);
+
+  const handleTryDemoData = async () => {
+    setLoadingDemo(true);
+    toast.info("Loading Demo Workspace...");
+    try {
+      const res = await fetch("/demo/demo-transactions.csv");
+      if (!res.ok) {
+        throw new Error("Unable to fetch demo statement file.");
+      }
+      const csvText = await res.text();
+      const file = new File([csvText], "demo-transactions.csv", {
+        type: "text/csv",
+      });
+
+      await uploadTransactions(file);
+      toast.success("✅ Demo data loaded successfully.");
+      await loadData(true);
+    } catch (err: any) {
+      console.error("Demo load failed:", err);
+      toast.error("Failed to load demo statement: " + (err?.message || err));
+    } finally {
+      setLoadingDemo(false);
+    }
+  };
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -1845,11 +1870,11 @@ export function DashboardPage({
               </li>
             </ul>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex flex-col gap-3 flex-shrink-0 items-stretch sm:items-end">
             <button
               onClick={handleUploadClick}
-              disabled={uploading}
-              className="inline-flex items-center gap-2.5 bg-primary text-primary-foreground text-base font-semibold px-6 py-3 rounded-2xl hover:opacity-95 transition-opacity disabled:opacity-50 shadow-md hover:shadow-lg"
+              disabled={uploading || loadingDemo}
+              className="inline-flex items-center justify-center gap-2.5 bg-primary text-primary-foreground text-base font-semibold px-6 py-3 rounded-2xl hover:opacity-95 transition-opacity disabled:opacity-50 shadow-md hover:shadow-lg"
             >
               {uploading ? (
                 <>
@@ -1861,6 +1886,20 @@ export function DashboardPage({
                   <Upload size={18} />
                   Upload Statement CSV
                 </>
+              )}
+            </button>
+            <button
+              onClick={handleTryDemoData}
+              disabled={uploading || loadingDemo}
+              className="inline-flex items-center justify-center gap-2 bg-card border border-border text-foreground hover:bg-muted text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors disabled:opacity-50 shadow-sm"
+            >
+              {loadingDemo ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#1A73E8]" />
+                  Loading Demo Workspace...
+                </>
+              ) : (
+                "Try Demo Data"
               )}
             </button>
           </div>
