@@ -1729,96 +1729,130 @@ export function DashboardPage({
 
   const hasNoData = !dashboard || !dashboard.has_financial_data;
 
+  const health = hasNoData ? 0 : (dashboard?.financialHealth ?? 0);
+  const healthText = hasNoData
+    ? "Upload CSV to calculate health score."
+    : (health >= 80
+        ? "Overall financial health is excellent and in the recommended range."
+        : health >= 70
+        ? "Overall financial health is solid, but has room to grow."
+        : "Overall financial health is below the recommended range.");
+
+  const netWorthText = hasNoData
+    ? "Upload CSV to calculate net worth track."
+    : "Net worth has grown steadily over recent months.";
+
+  const savingsRateVal = hasNoData ? 0 : (dashboard?.savingsRate ?? 0);
+  const savingsText = hasNoData
+    ? "Upload CSV to calculate savings rate."
+    : `${savingsRateVal.toFixed(1)}% of your income is currently being saved.`;
+
+  const emergencyMonths = hasNoData ? 0 : (dashboard?.emergencyFundMonths ?? 0);
+  const emergencyText = hasNoData
+    ? "Upload CSV to calculate runway months."
+    : `Covers approximately ${emergencyMonths.toFixed(1)} months of expenses.`;
+
+  const cashFlowVal = hasNoData ? 0 : num(dashboard?.cashFlow);
+  const cashFlowText = hasNoData
+    ? "Upload CSV to calculate monthly cash flow."
+    : (cashFlowVal >= 0
+        ? "Income currently exceeds monthly expenses."
+        : "Monthly expenses currently exceed your income.");
+
+  const burnRateText = hasNoData
+    ? "Upload CSV to calculate burn rate."
+    : "Average monthly spending across all categories.";
+
+  const goalProgressVal = hasNoData ? 0 : (dashboard?.goalProgress ?? 0);
+  const goalProgressText = hasNoData
+    ? "Upload CSV to track goal progress."
+    : (goalProgressVal > 0
+        ? `You have achieved ${goalProgressVal.toFixed(0)}% of your active goal targets.`
+        : "No active goals have been completed yet.");
+
+  const decisionScoreVal = hasNoData ? 0 : (dashboard?.decisionReadiness ?? 0);
+  const decisionText = hasNoData
+    ? "Upload CSV to compute decision score."
+    : (decisionScoreVal >= 80
+        ? "Highly prepared for future financial decisions."
+        : decisionScoreVal >= 60
+        ? "Moderately prepared for future financial decisions."
+        : "Take caution with upcoming major financial decisions.");
+
   const dashboardCards = dashboard
     ? [
         {
           label: "Financial Health",
           value: hasNoData ? "--" : (dashboard.financialHealth !== null ? String(dashboard.financialHealth) : "--"),
           unit: hasNoData || dashboard.financialHealth === null ? "" : "/100",
-          trend: hasNoData ? "No data" : `${(dashboard.kpis.financial_health_score ?? 0) >= 70 ? "Good" : "Needs work"}`,
-          up: hasNoData ? false : (dashboard.kpis.financial_health_score ?? 0) >= 70,
           Icon: Activity,
           color: "#FBBC04",
           bg: "#FEF7E0",
-          sub: "Health score"
+          description: healthText,
         },
         {
           label: "Net Worth",
           value: hasNoData ? "--" : (dashboard.netWorth !== null ? fmt(num(dashboard.netWorth), { currency: true, compact: true }) : "--"),
           unit: "",
-          trend: hasNoData ? "Upload CSV" : `${dashboard.summary.transaction_count} tx`,
-          up: true,
           Icon: Wallet,
           color: "#34A853",
           bg: "#E6F4EA",
-          sub: "Current"
+          description: netWorthText,
         },
         {
           label: "Savings Rate",
           value: hasNoData ? "--" : (dashboard.savingsRate !== null ? `${dashboard.savingsRate.toFixed(1)}%` : "--"),
           unit: "",
-          trend: hasNoData ? "Upload CSV" : `${dashboard.kpis.income_stability_score ?? 0}/100`,
-          up: hasNoData ? false : (dashboard.savingsRate ?? 0) >= 0,
           Icon: PiggyBank,
           color: "#1A73E8",
           bg: "#E8F0FE",
-          sub: "of income"
+          description: savingsText,
         },
         {
           label: "Emergency Fund",
           value: hasNoData ? "--" : (dashboard.emergencyFundMonths !== null ? dashboard.emergencyFundMonths.toFixed(1) : "--"),
           unit: hasNoData || dashboard.emergencyFundMonths === null ? "" : " mo",
-          trend: hasNoData ? "Upload CSV" : ((dashboard.emergencyFundMonths ?? 0) >= 6 ? "Healthy" : "Build more"),
-          up: hasNoData ? false : (dashboard.emergencyFundMonths ?? 0) >= 6,
           Icon: ShieldCheck,
           color: "#34A853",
           bg: "#E6F4EA",
-          sub: "runway"
+          description: emergencyText,
         },
         {
           label: "Cash Flow",
           value: hasNoData ? "--" : (dashboard.cashFlow !== null ? fmt(num(dashboard.cashFlow), { currency: true, compact: true }) : "--"),
           unit: "",
-          trend: hasNoData ? "Upload CSV" : ((dashboard.kpis.cash_flow ?? 0) >= 0 ? "Positive" : "Negative"),
-          up: hasNoData ? false : (dashboard.kpis.cash_flow ?? 0) >= 0,
           Icon: TrendingUp,
           color: "#1A73E8",
           bg: "#E8F0FE",
-          sub: "current"
+          description: cashFlowText,
         },
         {
           label: "Burn Rate",
           value: hasNoData ? "--" : (dashboard.burnRate !== null ? fmt(num(dashboard.burnRate), { currency: true, compact: true }) : "--"),
-          unit: hasNoData || dashboard.burnRate === null ? "" : "/mo",
-          trend: hasNoData ? "Upload CSV" : "Monthly",
-          up: false,
+          unit: "",
           Icon: Zap,
           color: "#EA4335",
           bg: "#FCE8E6",
-          sub: "expenses"
+          description: burnRateText,
         },
         {
           label: "Goal Progress",
           value: hasNoData ? "--" : (dashboard.goalProgress !== null ? `${dashboard.goalProgress.toFixed(0)}%` : "--"),
           unit: "",
-          trend: hasNoData ? "No goals yet" : ((dashboard.goalProgress ?? 0) >= 50 ? "On track" : "Needs focus"),
-          up: hasNoData ? false : (dashboard.goalProgress ?? 0) >= 50,
           Icon: Target,
           color: "#9C27B0",
           bg: "#F3E5F5",
-          sub: "avg progress"
+          description: goalProgressText,
         },
         {
           label: "Decision Score",
           value: hasNoData ? "--" : (dashboard.decisionReadiness !== null ? String(dashboard.decisionReadiness) : "--"),
           unit: hasNoData || dashboard.decisionReadiness === null ? "" : "/100",
-          trend: hasNoData ? "No data" : (dashboard.kpis.decision_risk ?? "No data"),
-          up: hasNoData ? false : (dashboard.decisionReadiness ?? 0) >= 60,
           Icon: Brain,
           color: "#00BCD4",
           bg: "#E0F7FA",
-          sub: "readiness"
-        }
+          description: decisionText,
+        },
       ]
     : [];
 
@@ -1942,20 +1976,21 @@ export function DashboardPage({
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {dashboardCards.map(({ label, value, unit, trend, up, Icon, color, bg, sub }) => (
-          <div key={label} className="bg-card rounded-2xl p-5 border border-border hover:shadow-md transition-shadow group">
-            <div className="flex items-start justify-between mb-3">
-              <p className="text-sm text-muted-foreground font-medium">{label}</p>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
-                <Icon size={15} style={{ color }} />
+        {dashboardCards.map(({ label, value, unit, Icon, color, bg, description }) => (
+          <div key={label} className="bg-card rounded-2xl p-5 border border-border hover:shadow-md transition-shadow group flex flex-col justify-between min-h-[145px]">
+            <div>
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-sm text-muted-foreground font-medium">{label}</p>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: bg }}>
+                  <Icon size={15} style={{ color }} />
+                </div>
               </div>
+              <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {value}<span className="text-base font-medium text-muted-foreground">{unit}</span>
+              </p>
             </div>
-            <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              {value}<span className="text-base font-medium text-muted-foreground">{unit}</span>
-            </p>
-            <p className={cn("text-xs font-medium mt-1", hasNoData ? "text-muted-foreground" : (up ? "text-[#34A853]" : "text-[#EA4335]"))}>
-              {!hasNoData && (up ? "↑ " : "↓ ")}{trend}
-              <span className="text-muted-foreground font-normal ml-1">· {sub}</span>
+            <p className="text-[11px] text-muted-foreground mt-2.5 leading-relaxed font-normal">
+              {description}
             </p>
           </div>
         ))}
