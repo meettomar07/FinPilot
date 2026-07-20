@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles, X } from "lucide-react";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { toast } from "sonner";
 
 import { Badge } from "../../app/components/ui/badge";
 import { Button } from "../../app/components/ui/button";
@@ -7,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Input } from "../../app/components/ui/input";
 import { Label } from "../../app/components/ui/label";
 import { Separator } from "../../app/components/ui/separator";
-import { firebaseConfigError } from "../../lib/firebase";
+import { firebaseConfigError, firebaseAuth } from "../../lib/firebase";
 import { useAuth } from "../../hooks/useAuth";
 
 type AuthMode = "signin" | "signup";
@@ -26,6 +28,65 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(firebaseConfigError);
+
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetting, setResetting] = useState(false);
+
+  useEffect(() => {
+    if (!forgotModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !resetting) {
+        setForgotModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [forgotModalOpen, resetting]);
+
+  const handleSendResetEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firebaseAuth) {
+      toast.error("Authentication is not configured.");
+      return;
+    }
+
+    const trimmedEmail = resetEmail.trim();
+    if (!trimmedEmail) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    setResetting(true);
+    try {
+      await sendPasswordResetEmail(firebaseAuth, trimmedEmail);
+      toast.success("Password reset email sent successfully. Please check your inbox (and spam folder if needed).");
+      setForgotModalOpen(false);
+      setResetEmail("");
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      let errorMsg = "Failed to send password reset email. Please try again.";
+      if (err?.code === "auth/user-not-found" || String(err).includes("user-not-found")) {
+        errorMsg = "No account exists with this email.";
+      } else if (err?.code === "auth/invalid-email" || String(err).includes("invalid-email")) {
+        errorMsg = "Please enter a valid email address.";
+      } else if (err?.code === "auth/network-request-failed" || String(err).includes("network-request-failed")) {
+        errorMsg = "Network error. Please try again.";
+      } else if (err?.code === "auth/too-many-requests" || String(err).includes("too-many-requests")) {
+        errorMsg = "Too many attempts. Please wait a few minutes before trying again.";
+      }
+      toast.error(errorMsg);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const title = useMemo(() => (mode === "signin" ? "Sign in to FinPilot" : "Create your FinPilot account"), [mode]);
 
@@ -240,6 +301,17 @@ export function LoginPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {mode === "signin" && (
+                  <div className="flex justify-end mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setForgotModalOpen(true)}
+                      className="text-xs text-[#1A73E8] dark:text-[#8AB4F8] hover:underline focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={submitting || !!firebaseConfigError}>
@@ -262,6 +334,75 @@ export function LoginPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Forgot Password Modal */}
+      {forgotModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          {/* Backdrop Click Handler */}
+          <div className="absolute inset-0" onClick={() => !resetting && setForgotModalOpen(false)} />
+          
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-xl relative z-10 animate-in zoom-in-95 duration-200">
+            {!resetting && (
+              <button
+                onClick={() => setForgotModalOpen(false)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            )}
+            
+            <h3 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Reset Password
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              Enter the email address associated with your account. We'll send you a password reset link.
+            </p>
+            
+            <form onSubmit={handleSendResetEmail} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email address</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  disabled={resetting}
+                  className="w-full"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setForgotModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:bg-muted focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                  disabled={resetting}
+                >
+                  Cancel
+                </button>
+                <Button
+                  type="submit"
+                  className="bg-[#1A73E8] hover:bg-[#1557b0] text-white font-bold px-4 py-2 rounded-xl"
+                  disabled={resetting}
+                >
+                  {resetting ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
