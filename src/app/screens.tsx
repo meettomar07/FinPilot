@@ -1516,6 +1516,10 @@ export function getGreetingSummary(dashboard: DashboardResponse | null, hasNoDat
     return "Ready to start analyzing your finances?";
   }
   
+  if (dashboard.greeting_summary) {
+    return dashboard.greeting_summary;
+  }
+  
   const health = dashboard.financialHealth ?? 0;
   const savings = dashboard.savingsRate ?? 0;
   const emergency = dashboard.emergencyFundMonths ?? 0;

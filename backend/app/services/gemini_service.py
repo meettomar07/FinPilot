@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.models.ai_interaction_log import AIInteractionLog
-from app.prompts.insights import SYSTEM_CHAT_PROMPT, SYSTEM_FINANCIAL_INSIGHTS_PROMPT
+from app.prompts.insights import SYSTEM_CHAT_PROMPT, SYSTEM_FINANCIAL_INSIGHTS_PROMPT, SYSTEM_GREETING_SUMMARY_PROMPT
 from app.schemas.common import PrivacyMetadata
 
 
@@ -45,6 +45,22 @@ class GeminiService:
         privacy.response_bytes = len(response_text.encode("utf-8"))
         self._log_ai_interaction(endpoint, purpose, privacy, model_name=self.settings.gemini_model)
         return self._parse_json(response_text), privacy
+
+    async def generate_greeting_summary(self, kpis_payload: dict) -> str | None:
+        if not self.settings.gemini_api_key:
+            return None
+        
+        request_body = {
+            "system_instruction": {"parts": [{"text": SYSTEM_GREETING_SUMMARY_PROMPT}]},
+            "contents": [{"parts": [{"text": json.dumps(kpis_payload, default=str)}]}],
+            "generationConfig": {"temperature": 0.3},
+        }
+        try:
+            response_text = await self._call_gemini(request_body)
+            return response_text.strip().replace('"', '')
+        except Exception as exc:
+            logger.exception("Failed to generate AI greeting summary: %s", exc)
+            return None
 
     async def chat(
         self,

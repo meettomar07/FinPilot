@@ -116,6 +116,7 @@ export type DashboardResponse = {
     budget_discipline_score: number | null;
   };
   has_financial_data: boolean;
+  greeting_summary?: string | null;
 };
 
 export type GoalSummary = {

@@ -46,3 +46,4 @@ class DashboardResponse(AppBaseModel):
     summary: FinancialSummary
     kpis: FinancialKPIs
     has_financial_data: bool
+    greeting_summary: str | None = None
