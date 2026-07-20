@@ -16,6 +16,7 @@ import {
   TransactionsPage,
   type Page,
   type Theme,
+  updateGlobalCurrency,
 } from "./screens";
 import { getPageFromHash, getRouteForPage, normalizeHash } from "./routes";
 import { Toaster } from "./components/ui/sonner";
@@ -50,7 +51,9 @@ function renderWorkspacePage(
   onNavigate: (nextPage: Page) => void,
   setDashboardSubtitle: (sub: string) => void,
   theme: Theme,
-  onThemeToggle: () => void
+  onThemeToggle: () => void,
+  currency: string,
+  onCurrencyChange: (c: string) => void
 ) {
   switch (page) {
     case "dashboard":
@@ -68,7 +71,14 @@ function renderWorkspacePage(
     case "privacy":
       return <PrivacyPage />;
     case "settings":
-      return <SettingsPage theme={theme} onThemeToggle={onThemeToggle} />;
+      return (
+        <SettingsPage
+          theme={theme}
+          onThemeToggle={onThemeToggle}
+          currency={currency}
+          onCurrencyChange={onCurrencyChange}
+        />
+      );
     default:
       return <DashboardPage onNavigate={onNavigate} setSubtitle={setDashboardSubtitle} />;
   }
@@ -78,11 +88,24 @@ export default function App() {
   const { user, loading, logout } = useAuth();
   const [page, setPage] = useState<Page>(readInitialPage);
   const [theme, setTheme] = useState<Theme>(readInitialTheme);
+  const [currency, setCurrencyState] = useState("USD ($)");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardSubtitle, setDashboardSubtitle] = useState<string | undefined>(undefined);
 
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+
+  // Sync currency preference when user log-in state changes
+  useEffect(() => {
+    const key = user?.uid ? `settings_${user.uid}_currency` : "settings_currency";
+    const val = localStorage.getItem(key) || "USD ($)";
+    setCurrencyState(val);
+  }, [user]);
+
+  // Keep the global formatting variable updated in sync with React state
+  useEffect(() => {
+    updateGlobalCurrency(currency);
+  }, [currency]);
   const [showLoadingScreen, setShowLoadingScreen] = useState(false);
   const [loadingFadeOut, setLoadingFadeOut] = useState(false);
 
@@ -205,7 +228,7 @@ export default function App() {
         title={title}
         subtitle={subtitle}
       >
-        {renderWorkspacePage(activePage, setPage, setDashboardSubtitle, theme, () => setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light")))}
+        {renderWorkspacePage(activePage, setPage, setDashboardSubtitle, theme, () => setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light")), currency, setCurrencyState)}
       </AppLayout>
 
       {showLoadingScreen && (

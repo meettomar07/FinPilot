@@ -219,15 +219,19 @@ const PRIVACY_FEATURES = [
 function cn(...classes: (string | undefined | false | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
-function getCurrencyDetails() {
-  const uid = firebaseAuth?.currentUser?.uid;
-  const key = uid ? `settings_${uid}_currency` : "settings_currency";
-  const stored = localStorage.getItem(key) || "USD ($)";
-  const match = stored.match(/^([A-Z]{3})\s*\((.+)\)$/);
+export let globalCurrencyDetails = { code: "USD", symbol: "$" };
+
+export function updateGlobalCurrency(currencyStr: string) {
+  const match = currencyStr.match(/^([A-Z]{3})\s*\((.+)\)$/);
   if (match) {
-    return { code: match[1], symbol: match[2] };
+    globalCurrencyDetails = { code: match[1], symbol: match[2] };
+  } else {
+    globalCurrencyDetails = { code: "USD", symbol: "$" };
   }
-  return { code: "USD", symbol: "$" };
+}
+
+function getCurrencyDetails() {
+  return globalCurrencyDetails;
 }
 
 function fmt(n: number, opts?: { currency?: boolean; compact?: boolean }) {
@@ -1983,7 +1987,7 @@ export function DashboardPage({
                   <Pie data={spendingBreakdown} innerRadius={48} outerRadius={70} dataKey="value" paddingAngle={2}>
                     {spendingBreakdown.map(({ color }, i) => <Cell key={i} fill={color} />)}
                   </Pie>
-                  <Tooltip formatter={(v) => [`$${v}`, ""]} />
+                  <Tooltip formatter={(v) => [`${getCurrencyDetails().symbol}${v}`, ""]} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-1.5 mt-2">
@@ -1991,7 +1995,7 @@ export function DashboardPage({
                   <div key={name} className="flex items-center gap-2 text-xs">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                     <span className="flex-1 text-muted-foreground">{name}</span>
-                    <span className="font-medium text-foreground">${value.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">{getCurrencyDetails().symbol}{value.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -3316,7 +3320,7 @@ export function DecisionLabPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Estimated COL/Cost ($) *</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Estimated COL/Cost ({getCurrencyDetails().symbol}) *</label>
                   <input
                     type="number"
                     required
@@ -3331,7 +3335,7 @@ export function DecisionLabPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Down Payment ($)</label>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Down Payment ({getCurrencyDetails().symbol})</label>
                   <input
                     type="number"
                     min="0"
@@ -3454,6 +3458,8 @@ export function AIAssistantPage() {
           netWorth: dashboardContext?.netWorth ?? null,
           savingsRate: dashboardContext?.savingsRate ?? null,
           emergencyFundMonths: dashboardContext?.emergencyFundMonths ?? null,
+          currency: getCurrencyDetails().code,
+          currency_symbol: getCurrencyDetails().symbol,
         },
         decision_context: null,
       });
@@ -3601,7 +3607,6 @@ export function AIAssistantPage() {
                 placeholder="Ask about your finances..."
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
-              <button className="text-muted-foreground hover:text-foreground transition-colors"><Mic size={16} /></button>
               <button
                 onClick={send}
                 disabled={!input.trim() || sending}
@@ -3841,8 +3846,8 @@ export function PrivacyPage() {
           goalsHtml += `
             <tr>
               <td>${g.name}</td>
-              <td style="text-align: right;">${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(g.target_amount))}</td>
-              <td style="text-align: right;">${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(g.current_amount))}</td>
+              <td style="text-align: right;">${new Intl.NumberFormat("en-US", { style: "currency", currency: getCurrencyDetails().code }).format(Number(g.target_amount))}</td>
+              <td style="text-align: right;">${new Intl.NumberFormat("en-US", { style: "currency", currency: getCurrencyDetails().code }).format(Number(g.current_amount))}</td>
               <td style="text-align: center;">${progress}%</td>
               <td>${g.deadline || "No deadline"}</td>
               <td>${g.status}</td>
@@ -3855,7 +3860,7 @@ export function PrivacyPage() {
 
         let decisionsHtml = "";
         decisionsRes.forEach(d => {
-          const cost = d.input_payload?.purchase_amount ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(d.input_payload.purchase_amount)) : "N/A";
+          const cost = d.input_payload?.purchase_amount ? new Intl.NumberFormat("en-US", { style: "currency", currency: getCurrencyDetails().code }).format(Number(d.input_payload.purchase_amount)) : "N/A";
           decisionsHtml += `
             <tr>
               <td>${d.label}</td>
@@ -4432,11 +4437,22 @@ function CustomSelect({
 
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
-export function SettingsPage({ theme, onThemeToggle }: { theme?: Theme; onThemeToggle?: () => void }) {
+export function SettingsPage({
+  theme,
+  onThemeToggle,
+  currency: propCurrency,
+  onCurrencyChange,
+}: {
+  theme?: Theme;
+  onThemeToggle?: () => void;
+  currency?: string;
+  onCurrencyChange?: (c: string) => void;
+}) {
   const { user, logout } = useAuth();
 
   const [displayName, setDisplayName] = useState(() => getUserDisplayName(user));
   const [currency, setCurrency] = useState(() => {
+    if (propCurrency) return propCurrency;
     const key = user?.uid ? `settings_${user.uid}_currency` : "settings_currency";
     return localStorage.getItem(key) || "USD ($)";
   });
@@ -4446,12 +4462,18 @@ export function SettingsPage({ theme, onThemeToggle }: { theme?: Theme; onThemeT
   });
 
   useEffect(() => {
+    if (propCurrency) {
+      setCurrency(propCurrency);
+    }
+  }, [propCurrency]);
+
+  useEffect(() => {
     setDisplayName(getUserDisplayName(user));
     const curKey = user?.uid ? `settings_${user.uid}_currency` : "settings_currency";
-    setCurrency(localStorage.getItem(curKey) || "USD ($)");
+    setCurrency(propCurrency || localStorage.getItem(curKey) || "USD ($)");
     const tzKey = user?.uid ? `settings_${user.uid}_timezone` : "settings_timezone";
     setTimezone(localStorage.getItem(tzKey) || "America/Los_Angeles");
-  }, [user]);
+  }, [user, propCurrency]);
 
   const [activeModal, setActiveModal] = useState<"name" | "currency" | "timezone" | null>(null);
   const [tempName, setTempName] = useState("");
@@ -4713,6 +4735,7 @@ export function SettingsPage({ theme, onThemeToggle }: { theme?: Theme; onThemeT
                   setCurrency(tempCurrency);
                   const key = user?.uid ? `settings_${user.uid}_currency` : "settings_currency";
                   localStorage.setItem(key, tempCurrency);
+                  onCurrencyChange?.(tempCurrency);
                   window.dispatchEvent(new Event("storage"));
                   setActiveModal(null);
                   toast.success("Currency preference updated!");

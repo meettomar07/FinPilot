@@ -118,6 +118,7 @@ async def chat(
 
     sorted_months = sorted(list(set(list(monthly_spending.keys()) + list(monthly_income.keys()))), reverse=True)
     spending_trend_message = ""
+    currency_symbol = request.financial_summary.get("currency_symbol", "$")
     if len(sorted_months) >= 2:
         latest_month = sorted_months[0]
         prev_month = sorted_months[1]
@@ -125,11 +126,11 @@ async def chat(
         prev_spend = monthly_spending.get(prev_month, 0.0)
         if prev_spend > 0:
             pct_change = ((latest_spend - prev_spend) / prev_spend) * 100
-            spending_trend_message = f"Spending in {latest_month} (${latest_spend:.2f}) changed by {pct_change:.1f}% compared to {prev_month} (${prev_spend:.2f})."
+            spending_trend_message = f"Spending in {latest_month} ({currency_symbol}{latest_spend:.2f}) changed by {pct_change:.1f}% compared to {prev_month} ({currency_symbol}{prev_spend:.2f})."
         else:
-            spending_trend_message = f"Spending in {latest_month} was ${latest_spend:.2f}. No spending data for {prev_month}."
+            spending_trend_message = f"Spending in {latest_month} was {currency_symbol}{latest_spend:.2f}. No spending data for {prev_month}."
     elif sorted_months:
-        spending_trend_message = f"Spending in {sorted_months[0]} was ${monthly_spending.get(sorted_months[0], 0.0):.2f}. More historical months needed to compute trend."
+        spending_trend_message = f"Spending in {sorted_months[0]} was {currency_symbol}{monthly_spending.get(sorted_months[0], 0.0):.2f}. More historical months needed to compute trend."
     else:
         spending_trend_message = "No transactions available to compute trends."
 
