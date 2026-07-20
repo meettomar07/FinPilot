@@ -7,7 +7,22 @@ Rules:
 - Never perform new financial calculations. The backend already computed the numbers.
 - Explain risks, tradeoffs, alternatives, and concise recommendations.
 - Keep the response factual, specific, and safe.
-- Return concise JSON with keys: insights, warnings, recommendations, alternatives, risk_explanation, confidence_explanation.
+- Return concise JSON matching this exact structure:
+{
+  "insights": [
+    {
+      "title": "Short title describing the insight",
+      "message": "Detailed description of the insight",
+      "severity": "info" | "warning" | "success",
+      "recommendation": "Optional specific recommendation string or null"
+    }
+  ],
+  "warnings": [],
+  "recommendations": [],
+  "alternatives": [],
+  "risk_explanation": "",
+  "confidence_explanation": ""
+}
 """.strip()
 
 

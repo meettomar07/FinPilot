@@ -120,15 +120,27 @@ async def upload_transactions(
             logger.info("Gemini returned no insights; using rule-based insights.")
         for item in ai_items[:3]:
             try:
-                # Use the Insight model directly rather than indexing the existing list which may be empty.
-                insights.append(
-                    Insight(
-                        title=item.get("title", "AI insight"),
-                        severity=item.get("severity", "info"),
-                        message=item.get("message", ""),
-                        recommendation=item.get("recommendation"),
+                if isinstance(item, str):
+                    insights.append(
+                        Insight(
+                            title="AI Insight",
+                            severity="info",
+                            message=item,
+                            recommendation=None
+                        )
                     )
-                )
+                elif isinstance(item, dict):
+                    message_val = item.get("message") or item.get("description") or ""
+                    insights.append(
+                        Insight(
+                            title=item.get("title", "AI Insight"),
+                            severity=item.get("severity", "info"),
+                            message=str(message_val),
+                            recommendation=item.get("recommendation"),
+                        )
+                    )
+                else:
+                    logger.warning("Unsupported insight item type: %s", type(item))
             except Exception:
                 logger.exception("Failed to construct Insight from AI item: %s", item)
 
