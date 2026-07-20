@@ -41,8 +41,13 @@ import {
 import { AuthUserAvatar } from "../components/auth/AuthUserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import type { User as FirebaseUser } from "firebase/auth";
-import { deleteUser as firebaseDeleteUser } from "firebase/auth";
-import { firebaseAuth } from "../lib/firebase";
+import { 
+  deleteUser as firebaseDeleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup
+} from "firebase/auth";
+import { firebaseAuth, googleAuthProvider } from "../lib/firebase";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -3592,46 +3597,123 @@ export function PrivacyPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [reauthModalOpen, setReauthModalOpen] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthing, setReauthing] = useState(false);
+
   const score = Object.values(controls).filter(Boolean).length === 0 ? 100 :
     controls.cloudSync ? 82 : 95;
 
-  const handleDeleteAccount = async () => {
+  const handleBackendDeletionAndCleanup = async () => {
     setDeleting(true);
     try {
-      // Step 1: Delete all backend data
+      // Call DELETE /api/v1/account to delete transactions, goals, settings, forecasts, decisions, notifications
       await deleteAccount();
 
-      // Step 2: Delete Firebase auth account
-      if (user) {
-        try {
-          await firebaseDeleteUser(user);
-        } catch (firebaseErr: any) {
-          if (firebaseErr?.code === "auth/requires-recent-login") {
-            toast.error("For your security, please sign in again before deleting your account.");
-            await logout();
-            return;
-          }
-          console.error("Firebase user deletion failed:", firebaseErr);
-          // Backend data is already deleted, proceed to sign out
-        }
-      }
-
-      // Step 3: Clear all local storage
+      // Clear local storage and session storage
       localStorage.clear();
       sessionStorage.clear();
 
-      // Step 4: Sign out and show confirmation
+      // Sign out and redirect
       try {
         await logout();
       } catch {
-        // User may already be deleted from Firebase, ignore signOut errors
+        // User is already deleted, but call logout to clear local auth state
       }
 
       toast.success("Your account has been permanently deleted.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to delete account.";
-      toast.error(msg);
+    } catch (err: any) {
+      console.error("Backend deletion failed after Firebase user was deleted:", err);
+      const msg = err instanceof Error ? err.message : "Failed to delete backend data.";
+      toast.error("Backend data cleanup failed: " + msg);
+      
+      // Still attempt to log out the user and clear local storage to prevent half-login state
+      localStorage.clear();
+      sessionStorage.clear();
+      try {
+        await logout();
+      } catch {}
+    } finally {
       setDeleting(false);
+      setDeleteModalOpen(false);
+      setReauthModalOpen(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // Step 1: Attempt to delete the Firebase user account first
+      await firebaseDeleteUser(user);
+
+      // If Firebase user deletion succeeds directly, delete all backend data
+      await handleBackendDeletionAndCleanup();
+
+    } catch (firebaseErr: any) {
+      // Step 2: Handle reauthentication error
+      if (
+        firebaseErr?.code === "auth/requires-recent-login" ||
+        String(firebaseErr).includes("CREDENTIAL_TOO_OLD_LOGIN_AGAIN")
+      ) {
+        setDeleting(false);
+        setDeleteModalOpen(false);
+        setReauthPassword("");
+        setReauthModalOpen(true);
+      } else {
+        const msg = firebaseErr instanceof Error ? firebaseErr.message : "Failed to delete account.";
+        toast.error(msg);
+        setDeleting(false);
+      }
+    }
+  };
+
+  const handleReauthenticateAndDelete = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!user) return;
+
+    setReauthing(true);
+    try {
+      const isGoogleUser = user.providerData.some((p) => p.providerId === "google.com");
+
+      if (isGoogleUser) {
+        if (!googleAuthProvider) {
+          throw new Error("Google Authentication is not configured.");
+        }
+        try {
+          await reauthenticateWithPopup(user, googleAuthProvider);
+        } catch (popupErr: any) {
+          if (popupErr?.code === "auth/popup-closed-by-user") {
+            throw new Error("Google sign-in cancelled.");
+          }
+          throw popupErr;
+        }
+      } else {
+        if (!reauthPassword) {
+          throw new Error("Password is required.");
+        }
+        const credential = EmailAuthProvider.credential(user.email || "", reauthPassword);
+        try {
+          await reauthenticateWithCredential(user, credential);
+        } catch (credErr: any) {
+          if (credErr?.code === "auth/wrong-password" || credErr?.code === "auth/invalid-credential") {
+            throw new Error("Incorrect password.");
+          }
+          throw credErr;
+        }
+      }
+
+      // Reauthentication succeeded, now delete user from Firebase
+      await firebaseDeleteUser(user);
+
+      // Now call backend deletion
+      await handleBackendDeletionAndCleanup();
+
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : "Reauthentication failed.";
+      toast.error(msg);
+    } finally {
+      setReauthing(false);
     }
   };
 
@@ -4082,6 +4164,102 @@ export function PrivacyPage() {
                   Delete Account
                 </button>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reauthenticate Modal */}
+      {reauthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+            {!reauthing && (
+              <button
+                onClick={() => setReauthModalOpen(false)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            )}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#D93025]/10 flex items-center justify-center flex-shrink-0">
+                <Lock size={20} className="text-[#D93025]" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Confirm Account Deletion
+              </h3>
+            </div>
+            
+            {user?.providerData.some((p) => p.providerId === "google.com") ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  Please sign in again with Google to confirm account deletion.
+                </p>
+                {reauthing ? (
+                  <div className="flex items-center justify-center gap-3 py-3">
+                    <div className="w-5 h-5 border-2 border-[#D93025] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-medium text-muted-foreground">Authenticating...</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setReauthModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleReauthenticateAndDelete()}
+                      className="inline-flex items-center gap-1.5 bg-[#D93025] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#B3261E] transition-colors"
+                    >
+                      Google Sign-In
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleReauthenticateAndDelete}>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  Confirm your password to continue.
+                </p>
+                <div className="space-y-4 mb-6">
+                  <Input
+                    type="password"
+                    value={reauthPassword}
+                    onChange={(e) => setReauthPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    disabled={reauthing}
+                    className="w-full"
+                    autoFocus
+                  />
+                </div>
+                {reauthing ? (
+                  <div className="flex items-center justify-center gap-3 py-3">
+                    <div className="w-5 h-5 border-2 border-[#D93025] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-medium text-muted-foreground">Authenticating...</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setReauthModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:bg-muted transition-colors"
+                      disabled={reauthing}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 bg-[#D93025] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#B3261E] transition-colors"
+                      disabled={reauthing}
+                    >
+                      Continue
+                    </button>
+                  </div>
+                )}
+              </form>
             )}
           </div>
         </div>
