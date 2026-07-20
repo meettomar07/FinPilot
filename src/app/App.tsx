@@ -48,7 +48,9 @@ function readInitialTheme(): Theme {
 function renderWorkspacePage(
   page: Page,
   onNavigate: (nextPage: Page) => void,
-  setDashboardSubtitle: (sub: string) => void
+  setDashboardSubtitle: (sub: string) => void,
+  theme: Theme,
+  onThemeToggle: () => void
 ) {
   switch (page) {
     case "dashboard":
@@ -66,7 +68,7 @@ function renderWorkspacePage(
     case "privacy":
       return <PrivacyPage />;
     case "settings":
-      return <SettingsPage />;
+      return <SettingsPage theme={theme} onThemeToggle={onThemeToggle} />;
     default:
       return <DashboardPage onNavigate={onNavigate} setSubtitle={setDashboardSubtitle} />;
   }
@@ -192,7 +194,7 @@ export default function App() {
   const subtitle = activePage === "dashboard" ? (dashboardSubtitle ?? defaultSubtitle) : defaultSubtitle;
 
   return (
-    <ProtectedRoute fallback={<LoginPage />}>
+    <ProtectedRoute fallback={<LoginPage theme={theme} onThemeToggle={() => setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"))} />}>
       <AppLayout
         active={activePage}
         onNav={setPage}
@@ -203,7 +205,7 @@ export default function App() {
         title={title}
         subtitle={subtitle}
       >
-        {renderWorkspacePage(activePage, setPage, setDashboardSubtitle)}
+        {renderWorkspacePage(activePage, setPage, setDashboardSubtitle, theme, () => setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light")))}
       </AppLayout>
 
       {showLoadingScreen && (

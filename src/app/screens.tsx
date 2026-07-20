@@ -4393,7 +4393,7 @@ function CustomSelect({
 
 // ─── Settings Page ────────────────────────────────────────────────────────────
 
-export function SettingsPage() {
+export function SettingsPage({ theme, onThemeToggle }: { theme?: Theme; onThemeToggle?: () => void }) {
   const { user, logout } = useAuth();
 
   const [displayName, setDisplayName] = useState(() => getUserDisplayName(user));
@@ -4534,6 +4534,11 @@ export function SettingsPage() {
             { label: "Unusual Spending Alerts", value: notifications["Unusual Spending Alerts"] ? "Enabled" : "Disabled", type: "toggle", onClick: () => handleToggleNotification("Unusual Spending Alerts") },
             { label: "Goal Milestone Alerts", value: notifications["Goal Milestone Alerts"] ? "Enabled" : "Disabled", type: "toggle", onClick: () => handleToggleNotification("Goal Milestone Alerts") },
             { label: "AI Insights Digest", value: notifications["AI Insights Digest"] ? "Enabled" : "Disabled", type: "toggle", onClick: () => handleToggleNotification("AI Insights Digest") },
+          ],
+        },
+        {
+          title: "Appearance", items: [
+            { label: "Dark Theme", value: theme === "dark" ? "Enabled" : "Disabled", type: "toggle", onClick: onThemeToggle || (() => {}) },
           ],
         },
       ].map(({ title, items }) => (

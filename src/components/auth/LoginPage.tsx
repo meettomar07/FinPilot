@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles, X, CheckCircle } from "lucide-react";
+import { AlertTriangle, Loader2, Lock, Mail, Eye, EyeOff, Shield, Database, Sparkles, X, CheckCircle, Sun, Moon } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ function prettyError(error: unknown) {
   return message.replace(/^Firebase:\s*/i, "");
 }
 
-export function LoginPage() {
+export function LoginPage({ theme = "dark", onThemeToggle }: { theme?: "light" | "dark"; onThemeToggle?: () => void }) {
   const { signInEmail, signInGoogle, signUp } = useAuth();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [name, setName] = useState("");
@@ -151,7 +151,17 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-6 py-10">
+    <div className="relative min-h-screen bg-background px-6 py-10">
+      {onThemeToggle && (
+        <button
+          onClick={onThemeToggle}
+          className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-md z-40 focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+      )}
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid lg:grid-cols-[1.1fr_480px]">
         <div className="hidden rounded-[2rem] border border-border bg-gradient-to-br from-[#0D47A1] via-[#1A73E8] to-[#4F8DF6] p-10 text-white shadow-2xl lg:block">
           <Badge className="bg-white/15 text-white hover:bg-white/15">Secure AI Financial Copilot</Badge>
