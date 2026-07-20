@@ -15,7 +15,8 @@ from app.models.goal import Goal
 from app.models.transaction import Transaction
 from app.models.upload_batch import UploadBatch
 from app.models.user_setting import UserSetting
-from app.services.firebase_auth import get_current_user, FirebaseUser
+from app.dependencies import get_current_user
+from app.services.firebase_auth import AuthenticatedUser
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ router = APIRouter(tags=["account"])
 
 @router.delete("/account")
 def delete_account(
-    current_user: FirebaseUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Permanently delete all data belonging to the authenticated user."""

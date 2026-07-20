@@ -88,3 +88,12 @@ def test_settings_endpoint(client) -> None:
     assert payload["goal_alerts"] is False
     assert payload["ai_digest"] is True
 
+
+def test_delete_account_endpoint(client) -> None:
+    # Test DELETE account
+    response = client.delete("/api/v1/account")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "deleted"
+    assert "permanently removed" in payload["message"]
+
