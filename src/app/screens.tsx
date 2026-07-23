@@ -449,7 +449,7 @@ export function ManualTransactionModal({
           payment_method: paymentMethod,
           notes: notes.trim(),
         });
-        toast.success("✅ Transaction added successfully.");
+        toast.success("Transaction added successfully.");
       }
       onSave();
       onClose();
@@ -1916,7 +1916,7 @@ export function DashboardPage({
       });
 
       await uploadTransactions(file);
-      toast.success("✅ Demo data loaded successfully.");
+      toast.success("Demo data loaded successfully.");
       await loadData(true);
     } catch (err: any) {
       console.error("Demo load failed:", err);
