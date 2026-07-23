@@ -279,13 +279,21 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                {/* Premium Animated Spinner */}
-                <div className="relative w-16 h-16 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full border-4 border-white/5" />
-                  <div className="absolute inset-0 rounded-full border-4 border-t-[#1A73E8] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+              <div className="space-y-4 text-center">
+                {/* Brand Icon Logo */}
+                <div className="mb-4">
+                  <img
+                    src="/logo-icon.png"
+                    alt="FinPilot Logo"
+                    className="w-12 h-12 mx-auto object-contain animate-pulse"
+                  />
                 </div>
-                <h3 className="text-xl font-bold text-white tracking-tight animate-pulse" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {/* Premium Animated Spinner */}
+                <div className="relative w-10 h-10 mx-auto mb-4">
+                  <div className="absolute inset-0 rounded-full border-2 border-white/5" />
+                  <div className="absolute inset-0 rounded-full border-2 border-t-[#1A73E8] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                </div>
+                <h3 className="text-lg font-bold text-white tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Signing you in...
                 </h3>
                 <p className="text-xs text-white/50 leading-relaxed max-w-xs mx-auto">

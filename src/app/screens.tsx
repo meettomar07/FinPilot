@@ -702,9 +702,9 @@ const BOTTOM_NAV = [
 ];
 
 function Sidebar({
-  active, onNav, collapsed, onToggle,
+  active, onNav, collapsed, onToggle, theme,
 }: {
-  active: Page; onNav: (p: Page) => void; collapsed: boolean; onToggle: () => void;
+  active: Page; onNav: (p: Page) => void; collapsed: boolean; onToggle: () => void; theme: Theme;
 }) {
   const { user } = useAuth();
   const [localName, setLocalName] = useState(() => getUserDisplayName(user));
@@ -729,24 +729,33 @@ function Sidebar({
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-xl bg-[#1A73E8] flex items-center justify-center flex-shrink-0">
-          <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
-        </div>
-        {!collapsed && (
-          <div className="overflow-hidden">
-            <span className="text-foreground font-bold text-base tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              FinPilot
-            </span>
-            <span className="text-[#1A73E8] font-bold text-base"> AI</span>
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border h-[72px] justify-between">
+        {collapsed ? (
+          <div className="flex items-center justify-center w-full">
+            <img
+              src="/logo-icon.png"
+              alt="FinPilot Logo"
+              className="w-8 h-8 object-contain cursor-pointer"
+              onClick={onToggle}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 overflow-hidden">
+            <img
+              src={theme === "dark" ? "/logo-horizontal-dark.png" : "/logo-horizontal.png"}
+              alt="FinPilot Logo"
+              className="h-8 max-w-[140px] object-contain"
+            />
           </div>
         )}
-        <button
-          onClick={onToggle}
-          className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        {!collapsed && (
+          <button
+            onClick={onToggle}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
 
       {/* Main Nav */}
@@ -984,7 +993,7 @@ export function AppLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar active={active} onNav={onNav} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />
+      <Sidebar active={active} onNav={onNav} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} theme={theme} />
       <TopBar
         title={title} subtitle={subtitle} theme={theme}
         onThemeToggle={onThemeToggle} sidebarCollapsed={sidebarCollapsed}
@@ -1022,13 +1031,12 @@ export function LandingPage({ onGetStarted }: { onGetStarted: () => void }) {
         )}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-8">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1A73E8] flex items-center justify-center">
-              <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-xl text-[#202124]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              FinPilot<span className="text-[#1A73E8]"> AI</span>
-            </span>
+          <div className="flex items-center">
+            <img
+              src="/logo-horizontal.png"
+              alt="FinPilot Logo"
+              className="h-9 object-contain"
+            />
           </div>
 
           <div className="hidden md:flex items-center gap-6 ml-4">
@@ -1479,13 +1487,12 @@ export function LandingPage({ onGetStarted }: { onGetStarted: () => void }) {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-5 gap-8 mb-10">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 rounded-xl bg-[#1A73E8] flex items-center justify-center">
-                  <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
-                </div>
-                <span className="font-bold text-xl text-[#202124]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  FinPilot <span className="text-[#1A73E8]">AI</span>
-                </span>
+              <div className="flex items-center mb-4">
+                <img
+                  src="/logo-horizontal.png"
+                  alt="FinPilot Logo"
+                  className="h-9 object-contain"
+                />
               </div>
               <p className="text-sm text-[#5F6368] leading-relaxed max-w-xs">
                 Make smarter financial decisions before you spend — not after.
@@ -1561,13 +1568,12 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center p-6">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-12">
-        <div className="w-9 h-9 rounded-xl bg-[#1A73E8] flex items-center justify-center">
-          <TrendingUp size={18} className="text-white" strokeWidth={2.5} />
-        </div>
-        <span className="font-bold text-2xl text-[#202124]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-          FinPilot <span className="text-[#1A73E8]">AI</span>
-        </span>
+      <div className="flex items-center mb-12">
+        <img
+          src="/logo-horizontal.png"
+          alt="FinPilot Logo"
+          className="h-10 object-contain"
+        />
       </div>
 
       {/* Progress */}
@@ -4489,13 +4495,16 @@ export function PrivacyPage() {
               </style>
             </head>
             <body>
-              <div class="header">
-                <div>
-                  <h1>FinPilot AI Financial Report</h1>
-                  <p>Comprehensive Financial Data Export</p>
+              <div class="header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1A73E8; padding-bottom: 15px; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <img src="/logo-horizontal.png" alt="FinPilot Logo" style="height: 36px; object-fit: contain;" />
+                  <div style="border-left: 1px solid #ddd; padding-left: 15px;">
+                    <h1 style="font-size: 18px; margin: 0; color: #1A73E8;">Financial Report</h1>
+                    <p style="margin: 0; font-size: 12px; color: #666;">Comprehensive Financial Data Export</p>
+                  </div>
                 </div>
                 <div style="text-align: right;">
-                  <p><strong>Date:</strong> ${dateStr}</p>
+                  <p style="margin: 0;"><strong>Date:</strong> ${dateStr}</p>
                 </div>
               </div>
 

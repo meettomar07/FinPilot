@@ -209,6 +209,13 @@ export function LoginPage({ theme = "dark", onThemeToggle }: { theme?: "light" |
 
         <Card className="mx-auto w-full max-w-[480px] border-border shadow-xl">
           <CardHeader className="space-y-3">
+            <div className="flex justify-center mb-6 pt-2">
+              <img
+                src={theme === "dark" ? "/logo-horizontal-dark.png" : "/logo-horizontal.png"}
+                alt="FinPilot Logo"
+                className="h-10 object-contain"
+              />
+            </div>
             <Badge variant="secondary" className="w-fit">
               Firebase Authentication
             </Badge>
