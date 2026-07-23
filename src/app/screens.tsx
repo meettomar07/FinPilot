@@ -11,7 +11,7 @@ import {
   Star, Check, Upload, Brain, Wallet, PiggyBank, Activity,
   FileText, Globe, Info, Send, Mic, Play, MapPin, Briefcase,
   ShieldCheck, Database, TrendingDown, BarChart2,
-  Cpu, Award
+  Cpu, Award, Edit3, Trash2
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -31,6 +31,9 @@ import {
   getUserSettings,
   updateUserSettings,
   deleteAccount,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
   type DashboardResponse,
   type ForecastResponse,
   type GoalsResponse,
@@ -275,6 +278,263 @@ function monthLabelFromIso(isoDate: string): string {
     return isoDate;
   }
   return date.toLocaleDateString("en-US", { month: "short" });
+}
+
+export function ManualTransactionModal({
+  isOpen,
+  onClose,
+  onSave,
+  transaction,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  transaction?: Transaction | null;
+}) {
+  const [type, setType] = useState<"expense" | "income">("expense");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [merchant, setMerchant] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (transaction) {
+      setType(transaction.transaction_type as "expense" | "income");
+      setAmount(String(Math.abs(num(transaction.amount))));
+      setCategory(transaction.category);
+      setMerchant(transaction.merchant);
+      setDate(transaction.date.split("T")[0]);
+      setPaymentMethod(transaction.payment_method || "UPI");
+      setNotes(transaction.notes || "");
+    } else {
+      setType("expense");
+      setAmount("");
+      setCategory("");
+      setMerchant("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setPaymentMethod("UPI");
+      setNotes("");
+    }
+    setValidationError(null);
+  }, [transaction, isOpen]);
+
+  const expenseCategories = [
+    "Food & Dining", "Shopping", "Transport", "Bills & Utilities",
+    "Entertainment", "Healthcare", "Education", "Travel", "Rent",
+    "Insurance", "Investments", "Other"
+  ];
+
+  const incomeCategories = [
+    "Salary", "Freelance", "Business", "Interest", "Investment",
+    "Refund", "Gift", "Other"
+  ];
+
+  const categories = type === "expense" ? expenseCategories : incomeCategories;
+
+  useEffect(() => {
+    if (isOpen && !categories.includes(category)) {
+      setCategory(categories[0]);
+    }
+  }, [type, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationError(null);
+
+    const amtNum = parseFloat(amount);
+    if (isNaN(amtNum) || amtNum <= 0) {
+      setValidationError("Amount must be greater than zero.");
+      return;
+    }
+    if (!category) {
+      setValidationError("Category is required.");
+      return;
+    }
+    if (!merchant.trim()) {
+      setValidationError("Merchant / Source is required.");
+      return;
+    }
+    if (!date) {
+      setValidationError("Date is required.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (transaction) {
+        await updateTransaction(transaction.id, {
+          transaction_type: type,
+          amount: amtNum,
+          category,
+          merchant: merchant.trim(),
+          date,
+          payment_method: paymentMethod,
+          notes: notes.trim(),
+        });
+        toast.success("Transaction updated successfully!");
+      } else {
+        await createTransaction({
+          transaction_type: type,
+          amount: amtNum,
+          category,
+          merchant: merchant.trim(),
+          date,
+          payment_method: paymentMethod,
+          notes: notes.trim(),
+        });
+        toast.success("✅ Transaction added successfully.");
+      }
+      onSave();
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to save transaction.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all duration-300">
+      <div className="bg-card w-full max-w-lg rounded-2xl border border-border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            {transaction ? "Edit Transaction" : "Add Transaction"}
+          </h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSave} className="p-6 space-y-4">
+          {validationError && (
+            <div className="bg-[#EA4335]/10 border border-[#EA4335]/20 text-[#EA4335] text-xs rounded-xl p-3 flex items-start gap-2">
+              <span className="font-semibold">Error:</span> {validationError}
+            </div>
+          )}
+
+          <div className="flex bg-muted p-1 rounded-xl">
+            {(["expense", "income"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setType(t)}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-semibold capitalize rounded-lg transition-all",
+                  type === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Amount *</label>
+              <input
+                type="number"
+                required
+                min="0.01"
+                step="any"
+                placeholder="100.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Date *</label>
+              <input
+                type="date"
+                required
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Category *</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Payment Method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+              >
+                {["UPI", "Debit Card", "Credit Card", "Cash", "Net Banking", "Bank Transfer", "Other"].map((pm) => (
+                  <option key={pm} value={pm}>{pm}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Merchant / Source *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Swiggy, Amazon, Salary"
+              value={merchant}
+              onChange={(e) => setMerchant(e.target.value)}
+              className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Notes (Optional)</label>
+            <textarea
+              placeholder="Add details about the transaction..."
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+            >
+              {saving ? <RefreshCw size={14} className="animate-spin" /> : null}
+              {transaction ? "Save Changes" : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function getUserDisplayName(user: FirebaseUser | null): string {
@@ -1554,6 +1814,33 @@ export function DashboardPage({
   const [loadingDemo, setLoadingDemo] = useState(false);
   const isMountedRef = useRef(true);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  const handleManualAddClick = () => {
+    setSelectedTransaction(null);
+    setIsModalOpen(true);
+  };
+
+  const handleManualEditClick = (tx: Transaction) => {
+    setSelectedTransaction(tx);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTransaction = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await deleteTransaction(id);
+      toast.success("Transaction deleted successfully.");
+      await loadData(true);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to delete transaction.");
+    }
+  };
+
   const handleTryDemoData = async () => {
     setLoadingDemo(true);
     toast.info("Loading Demo Workspace...");
@@ -1719,13 +2006,7 @@ export function DashboardPage({
     .slice(-6)
     .map(([, value]) => value);
 
-  const recentTransactions = transactions.slice(0, 5).map((tx) => ({
-    id: tx.id,
-    merchant: tx.merchant,
-    category: tx.category,
-    date: shortDate(tx.date),
-    amount: num(tx.amount),
-  }));
+  const recentTransactions = transactions.slice(0, 5);
 
   const hasNoData = !dashboard || !dashboard.has_financial_data;
 
@@ -1892,23 +2173,32 @@ export function DashboardPage({
           className="hidden"
         />
         {!hasNoData && (
-          <button
-            onClick={handleUploadClick}
-            disabled={uploading}
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {uploading ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload size={16} />
-                Upload CSV
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleUploadClick}
+              disabled={uploading}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {uploading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload size={16} />
+                  Upload CSV
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleManualAddClick}
+              className="inline-flex items-center gap-2 bg-card border border-border text-foreground hover:bg-muted text-sm font-medium px-4 py-2 rounded-xl transition-colors shadow-sm"
+            >
+              <Plus size={16} />
+              Add Transaction
+            </button>
+          </div>
         )}
       </div>
 
@@ -1969,6 +2259,14 @@ export function DashboardPage({
               ) : (
                 "Try Demo Data"
               )}
+            </button>
+            <button
+              onClick={handleManualAddClick}
+              disabled={uploading || loadingDemo}
+              className="inline-flex items-center justify-center gap-2 bg-card border border-border text-foreground hover:bg-muted text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors disabled:opacity-50 shadow-sm"
+            >
+              <Plus size={16} />
+              Add Transaction
             </button>
           </div>
         </div>
@@ -2214,22 +2512,60 @@ export function DashboardPage({
               View all <ChevronRight size={14} />
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 divide-y divide-border/50">
             {recentTransactions.map((tx) => (
-              <div key={tx.id} className="flex items-center gap-3 py-2">
-                <span className="text-lg w-8 text-center">{tx.amount > 0 ? "💰" : "💳"}</span>
+              <div key={tx.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                <span className="text-lg w-8 text-center">{num(tx.amount) > 0 ? "💰" : "💳"}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{tx.merchant}</p>
-                  <p className="text-xs text-muted-foreground">{tx.category} · {tx.date}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground truncate">{tx.merchant}</p>
+                    <span className={cn(
+                      "text-[9px] px-1.5 py-0.5 rounded-full font-medium border flex-shrink-0",
+                      tx.source === "Manual"
+                        ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                        : "bg-[#1A73E8]/10 text-[#1A73E8] border-[#1A73E8]/20"
+                    )}>
+                      {tx.source || "CSV Import"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{tx.category} · {shortDate(tx.date)}</p>
                 </div>
-                <span className={cn("text-sm font-semibold font-mono", tx.amount > 0 ? "text-[#34A853]" : "text-foreground")}>
-                  {tx.amount > 0 ? "+" : ""}{fmt(tx.amount, { currency: true })}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={cn("text-sm font-semibold font-mono text-right min-w-[70px]", num(tx.amount) > 0 ? "text-[#34A853]" : "text-foreground")}>
+                    {num(tx.amount) > 0 ? "+" : ""}{fmt(num(tx.amount), { currency: true })}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleManualEditClick(tx)}
+                      className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                      title="Edit Transaction"
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTransaction(tx.id)}
+                      className="p-1 text-muted-foreground hover:text-[#EA4335] hover:bg-[#EA4335]/10 rounded transition-colors"
+                      title="Delete Transaction"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
+            {recentTransactions.length === 0 && (
+              <p className="text-sm text-muted-foreground py-2">No transactions recorded yet.</p>
+            )}
           </div>
         </div>
       </div>
+
+      <ManualTransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={() => loadData(true)}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 }
@@ -2614,6 +2950,43 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  const handleEditClick = (tx: Transaction) => {
+    setSelectedTransaction(tx);
+    setIsModalOpen(true);
+  };
+
+  const handleAddClick = () => {
+    setSelectedTransaction(null);
+    setIsModalOpen(true);
+  };
+
+  const loadTransactionsList = async () => {
+    try {
+      const response = await getTransactions();
+      setTransactions(response.items);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to reload transactions.");
+    }
+  };
+
+  const handleDeleteClick = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await deleteTransaction(id);
+      toast.success("Transaction deleted successfully.");
+      await loadTransactionsList();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to delete transaction.");
+    }
+  };
+
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -2677,9 +3050,17 @@ export function TransactionsPage() {
   if (transactions.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Transactions</h2>
-          <p className="text-muted-foreground mt-1">Track your financial transactions.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Transactions</h2>
+            <p className="text-muted-foreground mt-1">Track your financial transactions.</p>
+          </div>
+          <button
+            onClick={handleAddClick}
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-sm"
+          >
+            <Plus size={16} /> Add Transaction
+          </button>
         </div>
         <div className="bg-card rounded-2xl p-8 border border-border text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-[#E8F0FE] flex items-center justify-center mx-auto text-[#1A73E8]">
@@ -2687,9 +3068,23 @@ export function TransactionsPage() {
           </div>
           <h3 className="font-bold text-lg text-foreground">No Transactions</h3>
           <p className="text-muted-foreground max-w-sm mx-auto text-sm">
-            Upload your first CSV to begin.
+            Upload your first CSV statement or add a manual transaction to begin.
           </p>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={handleAddClick}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+            >
+              <Plus size={16} /> Add Manual Transaction
+            </button>
+          </div>
         </div>
+        <ManualTransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={loadTransactionsList}
+          transaction={selectedTransaction}
+        />
       </div>
     );
   }
@@ -2699,8 +3094,14 @@ export function TransactionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Transactions</h2>
-          <p className="text-muted-foreground mt-1">{transactions.length} transactions imported</p>
+          <p className="text-muted-foreground mt-1">{transactions.length} transactions recorded</p>
         </div>
+        <button
+          onClick={handleAddClick}
+          className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-sm"
+        >
+          <Plus size={16} /> Add Transaction
+        </button>
       </div>
 
       {/* Stats */}
@@ -2744,24 +3145,51 @@ export function TransactionsPage() {
 
       {/* Table */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
-        <div className="grid grid-cols-[2rem_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="grid grid-cols-[2rem_1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           <div />
           <div>Merchant</div>
           <div className="text-center">Category</div>
           <div className="text-right">Amount</div>
+          <div className="text-center">Actions</div>
         </div>
         <div className="divide-y divide-border">
           {filtered.map((tx) => (
-            <div key={tx.id} className="grid grid-cols-[2rem_1fr_auto_auto] gap-4 px-5 py-3.5 items-center hover:bg-muted/40 transition-colors">
+            <div key={tx.id} className="grid grid-cols-[2rem_1fr_auto_auto_auto] gap-4 px-5 py-3.5 items-center hover:bg-muted/40 transition-colors">
               <span className="text-lg">{num(tx.amount) > 0 ? "💰" : "💳"}</span>
               <div>
-                <p className="text-sm font-medium text-foreground">{tx.merchant}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{tx.merchant}</p>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded-full font-medium border flex-shrink-0",
+                    tx.source === "Manual"
+                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                      : "bg-[#1A73E8]/10 text-[#1A73E8] border-[#1A73E8]/20"
+                  )}>
+                    {tx.source || "CSV Import"}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">{shortDate(tx.date)}</p>
               </div>
               <Badge color={num(tx.amount) > 0 ? "green" : "gray"}>{tx.category}</Badge>
-              <span className={cn("text-sm font-semibold font-mono text-right", num(tx.amount) > 0 ? "text-[#34A853]" : "text-foreground")}>
+              <span className={cn("text-sm font-semibold font-mono text-right min-w-[80px]", num(tx.amount) > 0 ? "text-[#34A853]" : "text-foreground")}>
                 {num(tx.amount) > 0 ? "+" : ""}{fmt(num(tx.amount), { currency: true })}
               </span>
+              <div className="flex items-center gap-1.5 justify-center">
+                <button
+                  onClick={() => handleEditClick(tx)}
+                  className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                  title="Edit Transaction"
+                >
+                  <Edit3 size={13} />
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(tx.id)}
+                  className="p-1 text-muted-foreground hover:text-[#EA4335] hover:bg-[#EA4335]/10 rounded transition-colors"
+                  title="Delete Transaction"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
           ))}
           {filtered.length === 0 && (
@@ -2769,6 +3197,13 @@ export function TransactionsPage() {
           )}
         </div>
       </div>
+
+      <ManualTransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={loadTransactionsList}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 }

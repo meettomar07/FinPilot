@@ -14,6 +14,24 @@ from app.utils.logging import configure_logging
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN source VARCHAR(50) DEFAULT 'CSV Import' NOT NULL"))
+        except Exception:
+            pass
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN payment_method VARCHAR(50)"))
+        except Exception:
+            pass
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN notes TEXT"))
+        except Exception:
+            pass
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN additional_metadata TEXT"))
+        except Exception:
+            pass
     yield
 
 

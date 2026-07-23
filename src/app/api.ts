@@ -147,6 +147,10 @@ export type Transaction = {
   currency: string;
   source_account: string | null;
   created_at: string;
+  source: string;
+  payment_method?: string | null;
+  notes?: string | null;
+  additional_metadata?: string | null;
 };
 
 export type TransactionsResponse = {
@@ -317,6 +321,54 @@ export function updateUserSettings(payload: UserSettingsUpdateRequest): Promise<
 
 export function deleteAccount(): Promise<{ status: string; message: string }> {
   return request<{ status: string; message: string }>("/account", {
+    method: "DELETE",
+  });
+}
+
+export type TransactionCreateRequest = {
+  transaction_type: string;
+  amount: number;
+  category: string;
+  merchant: string;
+  date: string;
+  payment_method?: string | null;
+  notes?: string | null;
+  additional_metadata?: string | null;
+};
+
+export type TransactionUpdateRequest = {
+  transaction_type?: string;
+  amount?: number;
+  category?: string;
+  merchant?: string;
+  date?: string;
+  payment_method?: string | null;
+  notes?: string | null;
+  additional_metadata?: string | null;
+};
+
+export function createTransaction(payload: TransactionCreateRequest): Promise<Transaction> {
+  return request<Transaction>("/transactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateTransaction(transactionId: number, payload: TransactionUpdateRequest): Promise<Transaction> {
+  return request<Transaction>(`/transactions/${transactionId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteTransaction(transactionId: number): Promise<void> {
+  return request<void>(`/transactions/${transactionId}`, {
     method: "DELETE",
   });
 }

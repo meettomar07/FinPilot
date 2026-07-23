@@ -22,5 +22,9 @@ class Transaction(Base, TimestampMixin):
     balance: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
     source_account: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="CSV Import", server_default="CSV Import")
+    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    additional_metadata: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     batch = relationship("UploadBatch", back_populates="transactions")
