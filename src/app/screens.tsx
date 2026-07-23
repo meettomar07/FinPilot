@@ -280,6 +280,67 @@ function monthLabelFromIso(isoDate: string): string {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
 
+export function CustomDropdownSelect({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  label: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between bg-muted/50 hover:bg-muted border border-border rounded-xl px-3 py-2 text-sm text-foreground text-left focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors"
+      >
+        <span className="truncate">{value || `Select ${label}`}</span>
+        <ChevronDown size={14} className={cn("text-muted-foreground transition-transform duration-200 flex-shrink-0", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-[60] left-0 right-0 mt-1.5 bg-card border border-border rounded-xl shadow-xl py-1 max-h-60 overflow-y-auto animate-in fade-in-50 slide-in-from-top-1 duration-150">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => {
+                onChange(opt);
+                setIsOpen(false);
+              }}
+              className={cn(
+                "w-full text-left px-3 py-2 text-sm transition-colors rounded-lg mx-1 my-0.5 max-w-[calc(100%-8px)]",
+                value === opt
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : "text-foreground hover:bg-muted/80"
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ManualTransactionModal({
   isOpen,
   onClose,
@@ -402,7 +463,7 @@ export function ManualTransactionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all duration-300">
-      <div className="bg-card w-full max-w-lg rounded-2xl border border-border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200 relative">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             {transaction ? "Edit Transaction" : "Add Transaction"}
@@ -465,28 +526,22 @@ export function ManualTransactionModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Category *</label>
-              <select
+              <CustomDropdownSelect
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                onChange={setCategory}
+                options={categories}
+                label="Category"
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Payment Method</label>
-              <select
+              <CustomDropdownSelect
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-              >
-                {["UPI", "Debit Card", "Credit Card", "Cash", "Net Banking", "Bank Transfer", "Other"].map((pm) => (
-                  <option key={pm} value={pm}>{pm}</option>
-                ))}
-              </select>
+                onChange={setPaymentMethod}
+                options={["UPI", "Debit Card", "Credit Card", "Cash", "Net Banking", "Bank Transfer", "Other"]}
+                label="Payment Method"
+              />
             </div>
           </div>
 
