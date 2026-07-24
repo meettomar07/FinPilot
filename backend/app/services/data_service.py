@@ -4,6 +4,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.ai_interaction_log import AIInteractionLog
+from app.models.budget import Budget
+from app.models.chat_history import ChatHistory
 from app.models.decision_run import DecisionRun
 from app.models.goal import Goal
 from app.models.transaction import Transaction
@@ -127,6 +129,45 @@ class DataService:
         self.db.commit()
         self.db.refresh(settings)
         return settings
+
+    def list_budgets(self) -> list[Budget]:
+        return list(
+            self.db.scalars(
+                select(Budget)
+                .where(Budget.user_id == self.user_id)
+                .order_by(Budget.category.asc())
+            )
+        )
+
+    def create_budget(self, budget: Budget) -> Budget:
+        budget.user_id = self.user_id
+        self.db.add(budget)
+        self.db.commit()
+        self.db.refresh(budget)
+        return budget
+
+    def list_chat_history(self, limit: int = 10) -> list[ChatHistory]:
+        history = list(
+            self.db.scalars(
+                select(ChatHistory)
+                .where(ChatHistory.user_id == self.user_id)
+                .order_by(ChatHistory.created_at.desc(), ChatHistory.id.desc())
+                .limit(limit)
+            )
+        )
+        # return in chronological order
+        return list(reversed(history))
+
+    def add_chat_message(self, role: str, message: str) -> ChatHistory:
+        msg = ChatHistory(
+            user_id=self.user_id,
+            role=role,
+            message=message
+        )
+        self.db.add(msg)
+        self.db.commit()
+        self.db.refresh(msg)
+        return msg
 
     def commit(self) -> None:
         self.db.commit()

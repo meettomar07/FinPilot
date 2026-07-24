@@ -1,5 +1,7 @@
 from app.models.ai_interaction_log import AIInteractionLog
 from app.models.base import Base
+from app.models.budget import Budget
+from app.models.chat_history import ChatHistory
 from app.models.decision_run import DecisionRun
 from app.models.goal import Goal
 from app.models.transaction import Transaction
@@ -9,6 +11,8 @@ from app.models.user_setting import UserSetting
 __all__ = [
     "AIInteractionLog",
     "Base",
+    "Budget",
+    "ChatHistory",
     "DecisionRun",
     "Goal",
     "Transaction",

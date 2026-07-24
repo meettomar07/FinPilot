@@ -1,6 +1,5 @@
-from collections import defaultdict
-from decimal import Decimal
-from fastapi import APIRouter, Depends
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import Settings
@@ -8,11 +7,10 @@ from app.database import get_db
 from app.dependencies import get_app_settings, get_current_user
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.firebase_auth import AuthenticatedUser
-from app.services.gemini_service import GeminiService
-from app.services.data_service import DataService
-from app.services.financial_engine import FinancialEngineService
-from app.services.forecasting import ForecastingService
+from app.schemas.common import PrivacyMetadata
+from app.services import ai_chat_service
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
 
@@ -24,180 +22,50 @@ async def chat(
     settings: Settings = Depends(get_app_settings),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> ChatResponse:
-    data_service = DataService(db, current_user.uid)
-    transactions = data_service.list_transactions()
-    
-    if not transactions:
-        from app.schemas.common import PrivacyMetadata
-        privacy = PrivacyMetadata(
+    """
+    Orchestrates the workflow of the FinPilot AI assistant:
+    1. Fetches user financial context (Dashboard, Budgets, Goals, Transactions).
+    2. Fetches chronological conversation history.
+    3. Runs rule-based engine to generate backend insights.
+    4. Constructs system instructions and snapshot prompt.
+    5. Calls Google Gemini API.
+    6. Persists transaction logs (user query + assistant response).
+    7. Returns response with privacy metadata.
+    """
+    user_id = current_user.uid
+
+    try:
+        # 1. Fetch Financial Context (Calculated deterministically from DB)
+        context = await ai_chat_service.get_financial_context(db, user_id)
+
+        # 2. Fetch Conversation History (Last 10 messages)
+        history = ai_chat_service.get_conversation_history(db, user_id)
+
+        # 3. Generate Financial Insights (Backend calculated)
+        insights = ai_chat_service.generate_financial_insights(context)
+
+        # 4. Build Prompt
+        prompt = ai_chat_service.build_prompt(context, history, insights, request.question)
+
+        # 5. Call Gemini
+        answer, privacy = await ai_chat_service.generate_gemini_response(settings, db, user_id, prompt)
+
+        # 6. Save Conversation
+        ai_chat_service.save_conversation(db, user_id, request.question, answer)
+
+        return ChatResponse(answer=answer, privacy=privacy)
+
+    except Exception as exc:
+        logger.exception("AI Chat endpoint encountered an error: %s", exc)
+        # Graceful error handling - never crash the server, return clean format
+        fallback_privacy = PrivacyMetadata(
             payload_bytes=len(request.question.encode("utf-8")),
-            response_bytes=len("Please upload a transaction CSV first so I can analyze your finances.".encode("utf-8")),
+            response_bytes=len("Unable to generate AI response.".encode("utf-8")),
             fields_shared=["question"],
             fields_hidden=["raw_transactions", "credentials", "account_numbers"],
             privacy_score=100,
         )
         return ChatResponse(
-            answer="Please upload a transaction CSV first so I can analyze your finances.",
-            privacy=privacy
+            answer="Unable to generate AI response. Please try again later.",
+            privacy=fallback_privacy
         )
-
-    goals = data_service.list_goals()
-    decisions = data_service.list_pending_decisions(limit=10)
-
-    # Calculate financial metrics
-    financial_engine = FinancialEngineService()
-    analysis = financial_engine.analyze(transactions, goals)
-
-    # Generate forecasts
-    forecast = ForecastingService().generate(transactions, goals)
-
-    # 1. Financial Summary
-    financial_summary = {
-        "total_income": float(analysis.kpis.income),
-        "total_expenses": float(analysis.kpis.expenses),
-        "net_worth": float(analysis.kpis.net_worth),
-        "savings": float(analysis.kpis.savings),
-        "savings_rate": float(analysis.kpis.savings_rate),
-        "cash_flow": float(analysis.kpis.cash_flow),
-        "burn_rate": float(analysis.kpis.burn_rate),
-        "emergency_fund_months": float(analysis.kpis.emergency_fund_months),
-        "financial_health_score": int(analysis.kpis.financial_health_score),
-        "decision_readiness_score": int(analysis.kpis.decision_readiness_score),
-    }
-
-    # 2. Transactions context
-    spending_by_category = {}
-    monthly_spending = {}
-    monthly_income = {}
-    for tx in transactions:
-        month = tx.date.strftime("%Y-%m")
-        if tx.amount < 0:
-            spending_by_category[tx.category] = spending_by_category.get(tx.category, 0.0) + float(-tx.amount)
-            monthly_spending[month] = monthly_spending.get(month, 0.0) + float(-tx.amount)
-        else:
-            monthly_income[month] = monthly_income.get(month, 0.0) + float(tx.amount)
-
-    expenses_sorted = sorted([tx for tx in transactions if tx.amount < 0], key=lambda t: t.amount)
-    largest_expenses = [
-        {
-            "date": str(tx.date),
-            "merchant": tx.merchant,
-            "amount": float(-tx.amount),
-            "category": tx.category
-        }
-        for tx in expenses_sorted[:5]
-    ]
-
-    income_sorted = sorted([tx for tx in transactions if tx.amount > 0], key=lambda t: t.amount, reverse=True)
-    largest_income_sources = [
-        {
-            "date": str(tx.date),
-            "merchant": tx.merchant,
-            "amount": float(tx.amount),
-            "category": tx.category
-        }
-        for tx in income_sorted[:5]
-    ]
-
-    recent_transactions = [
-        {
-            "date": str(tx.date),
-            "merchant": tx.merchant,
-            "amount": float(tx.amount),
-            "category": tx.category
-        }
-        for tx in transactions[:15]
-    ]
-
-    merchant_counts = {}
-    for tx in transactions:
-        if tx.amount < 0 and tx.merchant:
-            merchant_counts[tx.merchant] = merchant_counts.get(tx.merchant, 0) + 1
-    frequent_merchants = sorted(merchant_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-    frequent_merchants_list = [{"merchant": m, "count": c} for m, c in frequent_merchants]
-
-    sorted_months = sorted(list(set(list(monthly_spending.keys()) + list(monthly_income.keys()))), reverse=True)
-    spending_trend_message = ""
-    currency_symbol = request.financial_summary.get("currency_symbol", "$")
-    if len(sorted_months) >= 2:
-        latest_month = sorted_months[0]
-        prev_month = sorted_months[1]
-        latest_spend = monthly_spending.get(latest_month, 0.0)
-        prev_spend = monthly_spending.get(prev_month, 0.0)
-        if prev_spend > 0:
-            pct_change = ((latest_spend - prev_spend) / prev_spend) * 100
-            spending_trend_message = f"Spending in {latest_month} ({currency_symbol}{latest_spend:.2f}) changed by {pct_change:.1f}% compared to {prev_month} ({currency_symbol}{prev_spend:.2f})."
-        else:
-            spending_trend_message = f"Spending in {latest_month} was {currency_symbol}{latest_spend:.2f}. No spending data for {prev_month}."
-    elif sorted_months:
-        spending_trend_message = f"Spending in {sorted_months[0]} was {currency_symbol}{monthly_spending.get(sorted_months[0], 0.0):.2f}. More historical months needed to compute trend."
-    else:
-        spending_trend_message = "No transactions available to compute trends."
-
-    transactions_context = {
-        "spending_by_category": spending_by_category,
-        "monthly_spending": monthly_spending,
-        "monthly_income": monthly_income,
-        "largest_expenses": largest_expenses,
-        "largest_income_sources": largest_income_sources,
-        "recent_transactions": recent_transactions,
-        "frequent_merchants": frequent_merchants_list,
-        "spending_trends": spending_trend_message
-    }
-
-    # 3. Goals context
-    goals_context = []
-    for g in goals:
-        progress = float((g.current_amount / g.target_amount) * 100) if g.target_amount > 0 else 0.0
-        remaining = float(max(Decimal("0"), g.target_amount - g.current_amount))
-        goals_context.append({
-            "name": g.name,
-            "target_amount": float(g.target_amount),
-            "current_amount": float(g.current_amount),
-            "progress_percent": round(progress, 2),
-            "remaining_amount": remaining,
-            "deadline": str(g.deadline) if g.deadline else None,
-            "status": g.status
-        })
-
-    # 4. Forecast context
-    forecast_context = []
-    for p in forecast.periods:
-        forecast_context.append({
-            "period": p.period,
-            "projected_savings": float(p.projected_savings),
-            "projected_cash_flow": float(p.projected_cash_flow),
-            "projected_goal_completion": float(p.projected_goal_completion),
-            "projected_expense_trend": float(p.projected_expense_trend)
-        })
-
-    # 5. Decision context
-    decision_context = []
-    for r in decisions:
-        metrics = r.result_payload.get("metrics", {}) if r.result_payload else {}
-        decision_context.append({
-            "label": r.label,
-            "scenario_type": r.scenario_type,
-            "summary": r.summary,
-            "risk_level": metrics.get("risk"),
-            "confidence": metrics.get("confidence"),
-            "decision_score": metrics.get("decision_score")
-        })
-
-    payload = {
-        "question": request.question,
-        "financial_summary": financial_summary,
-        "transactions_context": transactions_context,
-        "goals_context": goals_context,
-        "forecast_context": forecast_context,
-        "decision_context": decision_context,
-    }
-
-    answer, privacy = await GeminiService(settings, db, current_user.uid).chat(
-        endpoint="/chat",
-        payload=payload,
-        fields_shared=["question", "financial_summary", "transactions_context", "goals_context", "forecast_context", "decision_context"],
-        fields_hidden=["raw_transactions", "credentials", "account_numbers"],
-    )
-    return ChatResponse(answer=answer, privacy=privacy)
-

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
 from app.models import Base
-from app.routers import account, chat, dashboard, decision, forecast, goals, privacy, transactions, upload
+from app.routers import account, budgets, chat, dashboard, decision, forecast, goals, privacy, transactions, upload
 from app.routers import settings as settings_router
 from app.utils.logging import configure_logging
 
@@ -62,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(privacy.router, prefix=prefix)
     app.include_router(decision.router, prefix=prefix)
     app.include_router(chat.router, prefix=prefix)
+    app.include_router(budgets.router, prefix=prefix)
     app.include_router(settings_router.router, prefix=prefix)
     app.include_router(account.router, prefix=prefix)
 
